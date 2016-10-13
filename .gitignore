@@ -7,6 +7,9 @@
 *.userosscache
 *.sln.docstates
 
+# Necessary to include RoslynSpike.csproj.user because otherwise project is considered as library and can not be started
+!RoslynSpike.csproj.user
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
