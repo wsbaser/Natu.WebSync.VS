@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using Moq;
 using Newtonsoft.Json;
 using NLog;
@@ -31,19 +32,15 @@ namespace RoslynSpike.BrowserConnection.WebSocket
             Serializer = serializer;
         }
 
-        public void Connect()
-        {
-            if (_webSocketServer == null)
-            {
+        public void Connect() {
+            if (_webSocketServer == null) {
                 _webSocketServer = CreateSocketServer(_serverPort, _path);
             }
-            try
-            {
+            try {
                 _webSocketServer.Start();
             }
-            catch (Exception e)
-            {
-                throw new Exception($@"Unable to start server {_webSocketServer.Address}", e);
+            catch (SocketException e) {
+                _log.Error($@"Unable to start server {_webSocketServer.Address}", e);
             }
         }
 
