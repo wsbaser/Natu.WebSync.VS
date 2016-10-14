@@ -5,6 +5,7 @@ using Moq;
 using Newtonsoft.Json;
 using NLog;
 using NUnit.Framework;
+using RoslynSpike.Converter;
 using RoslynSpike.SessionWeb.Models;
 using WebSocketSharp.Server;
 
@@ -84,8 +85,8 @@ namespace RoslynSpike.BrowserConnection.WebSocket
             SelectorToConvertReceived?.Invoke(this, selector);
         }
 
-        public void SendSelector(string selector, SelectorType selectorType) {
-            string serializedData = JsonConvert.SerializeObject(new {selectorType = selectorType.ToString(), selector});
+        public void SendSelector(Selector selector) {
+            string serializedData = JsonConvert.SerializeObject(selector);
             OnBroadcasted(SIMessage.CreateConvertedSelectorData(serializedData));
         }
 
