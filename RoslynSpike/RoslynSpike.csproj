@@ -66,6 +66,7 @@
     <Compile Include="Ember\DTO\PageDto.cs" />
     <Compile Include="Ember\DTO\ServiceDto.cs" />
     <Compile Include="Ember\EmberSerializer.cs" />
+    <Compile Include="SelectorsConverter.cs" />
     <Compile Include="Scss\AttributeMatchStyle.cs" />
     <Compile Include="Scss\InvalidScssException.cs" />
     <Compile Include="Scss\Scss.cs" />

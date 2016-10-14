@@ -3,6 +3,7 @@ namespace RoslynSpike.BrowserConnection
     public enum SIMessageType
     {
         SessionWebData,
-        SessionWebRequest
+        SessionWebRequest,
+        ConvertedSelector
     }
 }

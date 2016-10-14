@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Moq;
+using Newtonsoft.Json;
 using NLog;
 using NUnit.Framework;
 using RoslynSpike.SessionWeb.Models;
@@ -21,6 +22,7 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         public event EventHandler<SIMessage> Broadcasted;
 
         public ISessionWebSerializer Serializer { get; }
+        public event EventHandler<string> SelectorReceived;
 
         public WebSocketBrowserConnection(int serverPort, string path, ISessionWebSerializer serializer)
         {
@@ -76,6 +78,11 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         private void OnSessionWebReceived(IEnumerable<ISessionWeb> sessionWebs)
         {
             SessionWebReceived?.Invoke(this, sessionWebs);
+        }
+
+        public void SendSelector(string selector, SelectorType selectorType) {
+            string serializedData = JsonConvert.SerializeObject(new {selectorType, selector});
+            OnBroadcasted(SIMessage.CreateConvertedSelectorData(serializedData));
         }
 
         public void SendSessionWeb(IEnumerable<ISessionWeb> webs)

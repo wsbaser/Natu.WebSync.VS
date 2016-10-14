@@ -66,8 +66,9 @@ namespace RoslynSpike
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
         }
-        SynchronizeIt _synchronizeIt;
 
+        private SynchronizeIt _synchronizeIt;
+        private SelectorsConverter _scssConverter;
         #region Package Members
 
         /// <summary>
@@ -80,10 +81,10 @@ namespace RoslynSpike
             if (componentModel == null)
                 return;
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
-
             var browserConnection = CreateBrowserConnection();
-            var seleniumContextProvider = CreateSeleniumContextProvider();
-            _synchronizeIt = new SynchronizeIt(workspace, browserConnection, seleniumContextProvider);
+            //            var seleniumContextProvider = CreateSeleniumContextProvider();
+            //            _synchronizeIt = new SynchronizeIt(workspace, browserConnection, seleniumContextProvider);
+            _scssConverter = new SelectorsConverter(browserConnection);
         }
 
 

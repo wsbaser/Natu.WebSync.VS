@@ -39,5 +39,9 @@ namespace RoslynSpike.BrowserConnection
                 throw;
             }
         }
+
+        public static SIMessage CreateConvertedSelectorData(string data) {
+            return new SIMessage(SIMessageType.ConvertedSelector, data);
+        }
     }
 }
