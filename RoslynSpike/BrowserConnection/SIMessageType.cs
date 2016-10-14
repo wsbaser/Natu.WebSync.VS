@@ -4,6 +4,7 @@ namespace RoslynSpike.BrowserConnection
     {
         SessionWebData,
         SessionWebRequest,
+        ConvertSelector,
         ConvertedSelector
     }
 }

@@ -97,7 +97,7 @@ namespace RoslynSpike
         {
             try
             {
-                var connection = new WebSocketBrowserConnection(18488, "/synchronize", new EmberSerializer());
+                var connection = new WebSocketBrowserConnection(18488, "/websync", new EmberSerializer());
                 connection.Connect();
                 return connection;
             }

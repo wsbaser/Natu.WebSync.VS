@@ -10,7 +10,7 @@ namespace RoslynSpike.BrowserConnection
     public interface IBrowserConnection
     {
         ISessionWebSerializer Serializer { get; }
-        event EventHandler<string> SelectorReceived;
+        event EventHandler<string> SelectorToConvertReceived;
         void SendSelector(string selector, SelectorType selectorType);
         void SendSessionWeb(IEnumerable<ISessionWeb> webs);
         void Connect();

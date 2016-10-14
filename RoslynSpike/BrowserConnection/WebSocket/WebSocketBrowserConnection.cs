@@ -22,7 +22,7 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         public event EventHandler<SIMessage> Broadcasted;
 
         public ISessionWebSerializer Serializer { get; }
-        public event EventHandler<string> SelectorReceived;
+        public event EventHandler<string> SelectorToConvertReceived;
 
         public WebSocketBrowserConnection(int serverPort, string path, ISessionWebSerializer serializer)
         {
@@ -65,6 +65,9 @@ namespace RoslynSpike.BrowserConnection.WebSocket
                 case SIMessageType.SessionWebRequest:
                     OnSessionWebRequested();
                     break;
+                case SIMessageType.ConvertSelector:
+                    OnSelectorToConvertReceived(message.Data);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -80,8 +83,12 @@ namespace RoslynSpike.BrowserConnection.WebSocket
             SessionWebReceived?.Invoke(this, sessionWebs);
         }
 
+        private void OnSelectorToConvertReceived(string selector) {
+            SelectorToConvertReceived?.Invoke(this, selector);
+        }
+
         public void SendSelector(string selector, SelectorType selectorType) {
-            string serializedData = JsonConvert.SerializeObject(new {selectorType, selector});
+            string serializedData = JsonConvert.SerializeObject(new {selectorType = selectorType.ToString(), selector});
             OnBroadcasted(SIMessage.CreateConvertedSelectorData(serializedData));
         }
 

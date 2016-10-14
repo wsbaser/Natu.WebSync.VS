@@ -8,24 +8,32 @@ namespace RoslynSpike {
 
         public SelectorsConverter(IBrowserConnection browserConnection) {
             _browserConnection = browserConnection;
-            _browserConnection.SelectorReceived += _browserConnection_SelectorReceived;
+            _browserConnection.SelectorToConvertReceived += BrowserConnectionSelectorToConvertReceived;
         }
 
-        private void _browserConnection_SelectorReceived(object sender, string selector) {
+        private void BrowserConnectionSelectorToConvertReceived(object sender, string selector) {
             var result = Convert(selector);
             _browserConnection.SendSelector(result.Item1,result.Item2);
         }
 
         private Tuple<string, SelectorType> Convert(string selector) {
-            var scss = ScssBuilder.Create(selector);
-            if (scss.Css != null) {
-                return new Tuple<string, SelectorType>(scss.Css, SelectorType.Css);
+            try {
+                var scss = ScssBuilder.Create(selector);
+                if (scss.Css != null)
+                {
+                    return new Tuple<string, SelectorType>(scss.Css, SelectorType.Css);
+                }
+                return new Tuple<string, SelectorType>(scss.Xpath, SelectorType.XPath);
+
             }
-            return new Tuple<string, SelectorType>(scss.Xpath, SelectorType.XPath);
+            catch (InvalidScssException) {
+                return new Tuple<string, SelectorType>(selector, SelectorType.Undefined);
+            }
         }
     }
 
     public enum SelectorType {
+        Undefined,
         XPath,
         Css,
         Scss
