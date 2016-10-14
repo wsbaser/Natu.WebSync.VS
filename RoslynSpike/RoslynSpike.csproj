@@ -66,6 +66,12 @@
     <Compile Include="Ember\DTO\PageDto.cs" />
     <Compile Include="Ember\DTO\ServiceDto.cs" />
     <Compile Include="Ember\EmberSerializer.cs" />
+    <Compile Include="Scss\AttributeMatchStyle.cs" />
+    <Compile Include="Scss\InvalidScssException.cs" />
+    <Compile Include="Scss\Scss.cs" />
+    <Compile Include="Scss\ScssAttribute.cs" />
+    <Compile Include="Scss\SCSSBuilder.cs" />
+    <Compile Include="Scss\XpathBuilder.cs" />
     <Compile Include="SessionWeb\AttributeNames.cs" />
     <Compile Include="SessionWeb\ISessionWebPovider.cs" />
     <Compile Include="SessionWeb\Models\CodeError.cs" />
@@ -96,7 +102,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynPackage.cs" />
     <Compile Include="Utilities\Extensions\AttributeExtensions.cs" />
+    <Compile Include="Utilities\Extensions\EnumExtensions.cs" />
     <Compile Include="Utilities\Extensions\NamespaceExtensions.cs" />
+    <Compile Include="Utilities\Extensions\StringExtensions.cs" />
     <Compile Include="Utilities\Extensions\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
