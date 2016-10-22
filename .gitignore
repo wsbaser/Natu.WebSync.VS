@@ -23,7 +23,9 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
-[Ll]ibs/
+
+# We need Libs folder until we switch to nuget packages for CodeAnalysis and LanguageServices
+#[Ll]ibs/
 
 # Visual Studio 2015 cache/options directory
 .vs/
