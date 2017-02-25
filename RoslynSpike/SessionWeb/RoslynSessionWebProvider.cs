@@ -15,11 +15,11 @@ namespace RoslynSpike.SessionWeb
 {
     public class RoslynSessionWebProvider:ISessionWebPovider
     {
-        private const string BASE_SERVICE_TYPE = "ServiceImpl";
-        private const string BASE_PAGE_TYPE = "PageBase";
-        private const string BASE_COMPONENT_TYPE = "ComponentBase";
+        private const string BASE_SERVICE_TYPE = "IService";
+        private const string BASE_PAGE_TYPE = "IPage";
+        private const string BASE_COMPONENT_TYPE = "IComponent";
 
-        private static Logger _log = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
         public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(Workspace workspace)
         {
             try
