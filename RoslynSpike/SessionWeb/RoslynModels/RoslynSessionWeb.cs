@@ -4,15 +4,15 @@ using RoslynSpike.SessionWeb.Models;
 
 namespace RoslynSpike.SessionWeb.RoslynModels {
     public class RoslynSessionWeb : ISessionWeb {
-        public RoslynSessionWeb(IEnumerable<RoslynService> services, IEnumerable<RoslynComponent> components,
-            IEnumerable<RoslynPage> pages) {
+        public RoslynSessionWeb(IEnumerable<RoslynService> services, IEnumerable<RoslynComponentType> componentTypes,
+            IEnumerable<RoslynPageType> pageTypes) {
             Services = services.ToList<IService>();
-            Components = components.ToList<IComponent>();
-            Pages = pages.ToList<IPage>();
+            ComponentTypes = componentTypes.ToList<IComponentType>();
+            PageTypes = pageTypes.ToList<IPageType>();
         }
 
-        public List<IPage> Pages { get; }
+        public List<IPageType> PageTypes { get; }
         public List<IService> Services { get; }
-        public List<IComponent> Components { get; }
+        public List<IComponentType> ComponentTypes { get; }
     }
 }

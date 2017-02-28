@@ -1,19 +1,22 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using RoslynSpike.SessionWeb.Models;
 using RoslynSpike.Utilities.Extensions;
 
 namespace RoslynSpike.SessionWeb.RoslynModels {
-    public abstract class RoslynElementInstanceBase<T> : RoslynModelWithId<T>, IElementInstance {
+    public abstract class RoslynComponentInstanceBase<T> : RoslynModelWithId<T>, IComponentInstance {
         public string FieldName { get; private set; }
         public string Name { get; private set; }
         public string RootScss { get; private set; }
-        public string Type { get; private set; }
+        public string ComponentType { get; private set; }
         public string ParentId { get; }
+        public IEnumerable<string> ConstructorParams { get; set; }
 
         protected IFieldSymbol Field;
         protected AttributeData Attr;
 
-        protected RoslynElementInstanceBase(string parentId, IFieldSymbol field, AttributeData attr) {
+        protected RoslynComponentInstanceBase(string parentId, IFieldSymbol field, AttributeData attr) {
             ParentId = parentId;
             Field = field;
             Attr = attr;
@@ -22,9 +25,20 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         public override void Fill() {
             RootScss = GetRootScss();
             Name = GetName();
-            Type = GetTypeName();
+            ComponentType = GetTypeName();
             FieldName = GetFieldName();
-            Id = GenerateId(ParentId, Type, FieldName);
+            Id = GenerateId(ParentId, FieldName);
+            ConstructorParams = GetParams();
+        }
+
+        public List<string> GetParams()
+        {
+            var constructorArguments = Attr.GetAttributeConstructorArguments();
+            if (constructorArguments.Count > 0)
+            {
+                constructorArguments.RemoveAt(0);
+            }
+            return constructorArguments;
         }
 
         protected virtual string GetFieldName() {
@@ -43,8 +57,8 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
             return Attr.GetAttributeNamedArgument(ReflectionNames.WEA_SCSS_PARAM);
         }
 
-        protected string GenerateId(string parentId, string typeName, string fieldName) {
-            return $"{parentId}-{typeName}-{fieldName}";
+        protected string GenerateId(string parentId, string fieldName) {
+            return $"{parentId}.{fieldName}";
         }
     }
 }

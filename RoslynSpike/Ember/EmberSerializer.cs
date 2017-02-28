@@ -21,40 +21,25 @@ namespace RoslynSpike.Ember {
 
         private void SerializeSessionWeb(EmberDataPayload payload, ISessionWeb web) {
             payload.services = web.Services.Select(s => new ServiceDto(s)).ToList();
-            payload.components = web.Components.Select(c => new ComponentDto(c)).ToList();
-            payload.pages = web.Pages.Select(p => new PageDto(p)).ToList();
-            SerializeElementInstances(payload, web);
+            payload.pageTypes = web.PageTypes.Select(p => new PageTypeDto(p)).ToList();
+            payload.componentTypes = web.ComponentTypes.Select(c => new ComponentTypeDto(c)).ToList();
+            SerializeComponents(payload, web);
         }
 
-        private void SerializeElementInstances(EmberDataPayload payload, ISessionWeb web) {
-            payload.componentInstances = new List<ComponentInstanceDto>();
-            payload.elementInstances = new List<ElementInstanceDto>();
-
-            SerializeElementInstances(payload, web.Pages);
-            SerializeElementInstances(payload, web.Components);
+        private void SerializeComponents(EmberDataPayload payload, ISessionWeb web)
+        {
+            payload.components = new List<ComponentDto>();
+            SerializeComponents(payload, web.PageTypes);
+            SerializeComponents(payload, web.ComponentTypes);
         }
 
-        private static void SerializeElementInstances(EmberDataPayload payload,
-            IEnumerable<IElementsContainer> container) {
-            foreach (var page in container) {
-                foreach (var elementInstance in page.Elements) {
-                    string parentPageId = null, parentComponentId = null;
-                    if (page is IPage) {
-                        parentPageId = page.Id;
-                    }
-                    else if (page is IComponent) {
-                        parentComponentId = page.Id;
-                    }
-
-                    var componentInstane = elementInstance as IComponentInstance;
-                    if (componentInstane != null) {
-                        payload.componentInstances.Add(new ComponentInstanceDto(componentInstane, parentPageId,
-                            parentComponentId));
-                    }
-                    else {
-                        payload.elementInstances.Add(new ElementInstanceDto(elementInstance, parentPageId,
-                            parentComponentId));
-                    }
+        private static void SerializeComponents(EmberDataPayload payload, IEnumerable<IComponentsContainer> containers)
+        {
+            foreach (var container in containers)
+            {
+                foreach (var component in container.Components)
+                {
+                    payload.components.Add(new ComponentDto(component));
                 }
             }
         }

@@ -41,21 +41,21 @@ namespace RoslynSpike.SessionWeb
             }
         }
 
-        private async Task<IEnumerable<RoslynComponent>> GetComponentsAsync(Solution solution)
+        private async Task<IEnumerable<RoslynComponentType>> GetComponentsAsync(Solution solution)
         {
             var derivedClasses = await GetDerivedClassesAsync(solution, BASE_COMPONENT_TYPE);
             return derivedClasses.Select(dc => {
-                var component = new RoslynComponent(dc);
+                var component = new RoslynComponentType(dc);
                 component.Fill();
                 return component;
             });
         }
 
-        private async Task<IEnumerable<RoslynPage>> GetPagesAsync(Solution solution)
+        private async Task<IEnumerable<RoslynPageType>> GetPagesAsync(Solution solution)
         {
             var derivedClasses = await GetDerivedClassesAsync(solution, BASE_PAGE_TYPE);
             return derivedClasses.Select(dc => {
-                var page = new RoslynPage(dc);
+                var page = new RoslynPageType(dc);
                 page.Fill();
                 return page;
             });

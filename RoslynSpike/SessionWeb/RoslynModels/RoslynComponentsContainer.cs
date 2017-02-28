@@ -5,16 +5,17 @@ using Microsoft.CodeAnalysis;
 using RoslynSpike.SessionWeb.Models;
 
 namespace RoslynSpike.SessionWeb.RoslynModels {
-    public abstract class RoslynElementsContainer<T> : RoslynNamedTypeWrapper<T>,IElementsContainer {
-        public List<IElementInstance> Elements { get; set; }
+    public abstract class RoslynComponentsContainer<T> : RoslynNamedTypeWrapper<T>,IComponentsContainer {
+        public List<IComponentInstance> Components { get; set; }
 
-        protected RoslynElementsContainer(INamedTypeSymbol type) : base(type) {
+        protected RoslynComponentsContainer(INamedTypeSymbol type) : base(type)
+        {
         }
 
         public override void Fill() {
             base.Fill();
 
-            Elements = new List<IElementInstance>();
+            Components = new List<IComponentInstance>();
 
             var fields = Type.GetMembers().Where(m => m.Kind == SymbolKind.Field);
             foreach (var symbol in fields)
@@ -32,16 +33,16 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
                 if (webElementAttr != null)
                 {
                     // . this is a WebElement field
-                    var elementInstance = GetElementInstance(field, webElementAttr);
-                    if (elementInstance != null)
-                        Elements.Add(elementInstance);
+                    var componentInstance = GetComponentInstance(field, webElementAttr);
+                    if (componentInstance != null)
+                        Components.Add(componentInstance);
                 }
                 if (webComponentAttr != null)
                 {
                     // . this is a WebComponent field
                     var componentInstance = GetComponentInstance(field, webComponentAttr);
                     if (componentInstance != null)
-                        Elements.Add(componentInstance);
+                        Components.Add(componentInstance);
                 }
             }
 
@@ -59,39 +60,11 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
             return weAttrs.Count == 1 ? weAttrs.First() : null;
         }
 
-        private WebElementType ParseElementType(string typeName) {
-            switch (typeName) {
-                case "WebText":
-                    return WebElementType.WebText;
-                case "WebButton":
-                    return WebElementType.WebButton;
-                case "WebCheckbox":
-                    return WebElementType.WebCheckbox;
-                case "WebImage":
-                    return WebElementType.WebImage;
-                case "WebInput":
-                    return WebElementType.WebInput;
-                case "WebLink":
-                    return WebElementType.WebLink;
-                case "WebRadioButton":
-                    return WebElementType.WebRadioButton;
-                default:
-                    return WebElementType.Unknown;
-            }
-        }
-
         protected RoslynComponentInstance GetComponentInstance(IFieldSymbol field, AttributeData webComponentAttr)
         {
-            var component = new RoslynComponentInstance(Id, field, webComponentAttr);
+            var component = new RoslynComponentInstance(TypeName, field, webComponentAttr);
             component.Fill();
             return component;
-        }
-
-        protected RoslynElementInstance GetElementInstance(IFieldSymbol field, AttributeData webElementAttr)
-        {
-            var element = new RoslynElementInstance(Id, field, webElementAttr);
-            element.Fill();
-            return ParseElementType(element.Type) == WebElementType.Unknown ? null : element;
         }
 
         protected AttributeData GetWebComponentAttribute(ImmutableArray<AttributeData> attrs)
