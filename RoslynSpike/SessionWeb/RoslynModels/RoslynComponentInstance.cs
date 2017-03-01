@@ -19,11 +19,6 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
             return Field.Type.GetFullTypeName();
         }
 
-        protected override string GetRootScss() {
-            var constructorArguments = Attr.GetAttributeConstructorArguments();
-            return constructorArguments.Count > 0 ? constructorArguments.First() : null;
-        }
-
         public override void SynchronizeTo(IComponentInstance model)
         {
             throw new NotImplementedException();

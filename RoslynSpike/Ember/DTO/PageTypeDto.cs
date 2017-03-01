@@ -3,13 +3,13 @@ using RoslynSpike.SessionWeb.Models;
 namespace RoslynSpike.Ember.DTO {
     public class PageTypeDto : ComponentsContainerDTO
     {
-        public string BasePageType;
-        public string AbsolutePath;
+        public string basePageType;
+        public string absolutePath;
 
         public PageTypeDto(IPageType page) : base(page)
         {
-            BasePageType = page.BasePageTypeId;
-            AbsolutePath = page.AbsolutePath;
+            basePageType = page.BasePageTypeId;
+            absolutePath = page.AbsolutePath;
         }
     }
 }

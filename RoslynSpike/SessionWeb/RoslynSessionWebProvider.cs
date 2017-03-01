@@ -15,9 +15,6 @@ namespace RoslynSpike.SessionWeb
 {
     public class RoslynSessionWebProvider:ISessionWebPovider
     {
-        private const string BASE_SERVICE_TYPE = "IService";
-        private const string BASE_PAGE_TYPE = "IPage";
-        private const string BASE_COMPONENT_TYPE = "IComponent";
 
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
         public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(Workspace workspace)
@@ -43,7 +40,7 @@ namespace RoslynSpike.SessionWeb
 
         private async Task<IEnumerable<RoslynComponentType>> GetComponentsAsync(Solution solution)
         {
-            var derivedClasses = await GetDerivedClassesAsync(solution, BASE_COMPONENT_TYPE);
+            var derivedClasses = await GetDerivedClassesAsync(solution, ReflectionNames.BASE_COMPONENT_TYPE);
             return derivedClasses.Select(dc => {
                 var component = new RoslynComponentType(dc);
                 component.Fill();
@@ -53,7 +50,7 @@ namespace RoslynSpike.SessionWeb
 
         private async Task<IEnumerable<RoslynPageType>> GetPagesAsync(Solution solution)
         {
-            var derivedClasses = await GetDerivedClassesAsync(solution, BASE_PAGE_TYPE);
+            var derivedClasses = await GetDerivedClassesAsync(solution, ReflectionNames.BASE_PAGE_TYPE);
             return derivedClasses.Select(dc => {
                 var page = new RoslynPageType(dc);
                 page.Fill();
@@ -63,7 +60,7 @@ namespace RoslynSpike.SessionWeb
 
         private async Task<IEnumerable<RoslynService>> GetServicesAsync(Solution solution)
         {
-            var derivedClasses = await GetDerivedClassesAsync(solution, BASE_SERVICE_TYPE);
+            var derivedClasses = await GetDerivedClassesAsync(solution, ReflectionNames.BASE_SERVICE_TYPE);
             return derivedClasses.Select(dc => {
                 var service = new RoslynService(dc);
                 service.Fill();

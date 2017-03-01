@@ -11,7 +11,7 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         }
 
         public override void Fill() {
-            Id = Type.GetFullTypeName();
+            Id = Type.ToString();
             TypeName = Type.Name;
         }
     }

@@ -1,7 +1,6 @@
 using System;
 using Microsoft.CodeAnalysis;
 using RoslynSpike.SessionWeb.Models;
-using RoslynSpike.Utilities.Extensions;
 
 namespace RoslynSpike.SessionWeb.RoslynModels {
     public class RoslynPageType : RoslynComponentsContainer<IPageType>, IPageType {
@@ -14,7 +13,7 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         public override void Fill()
         {
             base.Fill();
-            BasePageTypeId = Type.BaseType.GetFullTypeName();
+            BasePageTypeId = Type.Name == ReflectionNames.BASE_PAGE_TYPE ? null : Type.BaseType.ToString();
             AbsolutePath = GetAbsolutePath();
         }
 

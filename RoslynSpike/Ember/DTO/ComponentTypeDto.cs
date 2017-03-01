@@ -4,11 +4,11 @@ namespace RoslynSpike.Ember.DTO
 {
     public class ComponentTypeDto : ComponentsContainerDTO
     {
-        public string BaseComponentType;
+        public string baseComponentType;
 
         public ComponentTypeDto(IComponentType component) : base(component)
         {
-            BaseComponentType = component.BaseComponentTypeId;
+            baseComponentType = component.BaseComponentTypeId;
         }
     }
 }
