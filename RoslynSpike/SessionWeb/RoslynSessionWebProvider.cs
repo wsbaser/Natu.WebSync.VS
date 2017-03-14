@@ -10,32 +10,99 @@ using RoslynSpike.SessionWeb.Models;
 using RoslynSpike.SessionWeb.RoslynModels;
 using Project = Microsoft.CodeAnalysis.Project;
 using Solution = Microsoft.CodeAnalysis.Solution;
+using Microsoft.VisualStudio.LanguageServices;
+using RoslynSpike.Utilities.Extensions;
 
 namespace RoslynSpike.SessionWeb
 {
     public class RoslynSessionWebProvider:ISessionWebPovider
     {
+        private VisualStudioWorkspace _workspace;
+        private Dictionary<string, ISessionWeb> _cachedSessionWebs;
+        INamedTypeSymbol _basePageType;
+        INamedTypeSymbol _baseComponentType;
+        INamedTypeSymbol _baseServiceType;
+
+        public RoslynSessionWebProvider(VisualStudioWorkspace workspace)
+        {
+            _workspace = workspace;
+        }
+
+        public async Task InitializeAsync()
+        {
+            _basePageType = await GetTypeByName(_workspace.CurrentSolution, ReflectionNames.BASE_PAGE_TYPE);
+            _baseComponentType = await GetTypeByName(_workspace.CurrentSolution, ReflectionNames.BASE_COMPONENT_TYPE);
+            _baseServiceType = await GetTypeByName(_workspace.CurrentSolution, ReflectionNames.BASE_SERVICE_TYPE);
+        }
 
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
-        public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(Workspace workspace)
+        public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(DocumentId changedDocumentId)
         {
             try
             {
-                var solution = workspace.CurrentSolution;
+                if (_cachedSessionWebs == null)
+                {
+                    var document = _workspace.CurrentSolution.GetDocument(changedDocumentId);
+                    var syntaxTree = await document.GetSyntaxTreeAsync();
+                    var allTypes = syntaxTree.GetRoot().DescendantNodes().OfType<INamedTypeSymbol>();
+                    var pages = GetPages(allTypes);
+                    var components = GetComppnents(allTypes);
+                    return UpdateCachedSessionWebs(pages, components);
+                }
+                else
+                {
+                    var solution = _workspace.CurrentSolution;
+                    //solution.GetDocument();
+                    var services = await GetServicesAsync(solution);
+                    var pages = await GetPagesAsync(solution);
+                    var components = await GetComponentsAsync(solution);
 
-                var services = await GetServicesAsync(solution);
-                var pages = await GetPagesAsync(solution);
-                var components = await GetComponentsAsync(solution);
-
-                // . for now, we unable to extract sessions, so everything is store in one session
-                var sessionWeb = new RoslynSessionWeb(services, components,pages);
-                return new List<ISessionWeb> {sessionWeb};
+                    // . for now, we unable to extract sessions, so everything is store in one session
+                    var sessionWeb = new RoslynSessionWeb(services, components, pages);
+                    var sessionWebs = new List<ISessionWeb> { sessionWeb };
+                    CacheSesionWebs(sessionWebs);
+                    return sessionWebs;
+                }
             }
             catch (Exception ex)
             {
                 _log.Error(ex,"Unable to collect selenium contexts");
                 throw;
             }
+        }
+
+        private void CacheSesionWebs(List<ISessionWeb> sessionWebs)
+        {
+            throw new NotImplementedException();
+        }
+
+        private List<ISessionWeb> UpdateCachedSessionWebs(IEnumerable<RoslynPageType> pageTypes, IEnumerable<RoslynComponentType> componentTypes)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<RoslynComponentType> GetComppnents(IEnumerable<INamedTypeSymbol> types)
+        {
+            var baseComponentTypeName = _baseComponentType.GetFullTypeName();
+            var pageTypes = types.Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == baseComponentTypeName));
+            return pageTypes.Select(dc =>
+            {
+                var page = new RoslynComponentType(dc);
+                page.Fill();
+                return page;
+            });
+        }
+
+        public IEnumerable<RoslynPageType> GetPages(IEnumerable<INamedTypeSymbol> types)
+        {
+            var basePageTypeName = _basePageType.GetFullTypeName();
+            var pageTypes = types.Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == basePageTypeName));
+            return pageTypes.Select(dc =>
+            {
+                var page = new RoslynPageType(dc);
+                page.Fill();
+                return page;
+            });
         }
 
         private async Task<IEnumerable<RoslynComponentType>> GetComponentsAsync(Solution solution)

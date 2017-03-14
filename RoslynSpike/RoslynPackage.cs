@@ -83,15 +83,15 @@ namespace RoslynSpike
                 return;
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
             var browserConnection = CreateBrowserConnection();
-            var seleniumContextProvider = CreateSeleniumContextProvider();
+            var seleniumContextProvider = CreateSeleniumContextProvider(workspace);
             _synchronizeIt = new SynchronizeIt(workspace, browserConnection, seleniumContextProvider);
             _scssConverter = new SelectorsConverter(browserConnection);
         }
 
 
-        private ISessionWebPovider CreateSeleniumContextProvider()
+        private ISessionWebPovider CreateSeleniumContextProvider(VisualStudioWorkspace workspace)
         {
-            return new RoslynSessionWebProvider();
+            return new RoslynSessionWebProvider(workspace);
         }
 
         private IBrowserConnection CreateBrowserConnection()

@@ -41,12 +41,16 @@ namespace RoslynSpike
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e)
         {
-            CollectAndSynchronizeChanges();
+            // TODO: how to handle other events
+            if (e.Kind == WorkspaceChangeKind.DocumentChanged)
+            {
+                CollectAndSynchronizeChanges();
+            }
         }
 
         private async void CollectAndSynchronizeChanges()
         {
-            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(_workspace);
+            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync();
             // . Currently, there is only one
             var firstSessionWeb = sessionWebs.First();
             if (!firstSessionWeb.Equals(_sessionWeb))
