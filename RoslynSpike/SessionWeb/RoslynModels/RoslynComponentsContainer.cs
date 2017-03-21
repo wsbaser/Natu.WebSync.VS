@@ -17,11 +17,10 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
 
             Components = new List<IComponentInstance>();
 
-            var fields = Type.GetMembers().Where(m => m.Kind == SymbolKind.Field);
+            var fields = Type.GetMembers().Where(m => m.Kind == SymbolKind.Field || m.Kind == SymbolKind.Property);
             foreach (var symbol in fields)
             {
-                var field = (IFieldSymbol)symbol;
-                var attrs = field.GetAttributes();
+                var attrs = symbol.GetAttributes();
                 var webElementAttr = GetWebElementAttribute(attrs);
                 var webComponentAttr = GetWebComponentAttribute(attrs);
                 if ((webElementAttr == null && webComponentAttr == null) ||
@@ -33,14 +32,14 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
                 if (webElementAttr != null)
                 {
                     // . this is a WebElement field
-                    var componentInstance = GetComponentInstance(field, webElementAttr);
+                    var componentInstance = GetComponentInstance(symbol, webElementAttr);
                     if (componentInstance != null)
                         Components.Add(componentInstance);
                 }
                 if (webComponentAttr != null)
                 {
                     // . this is a WebComponent field
-                    var componentInstance = GetComponentInstance(field, webComponentAttr);
+                    var componentInstance = GetComponentInstance(symbol, webComponentAttr);
                     if (componentInstance != null)
                         Components.Add(componentInstance);
                 }
@@ -60,9 +59,9 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
             return weAttrs.Count == 1 ? weAttrs.First() : null;
         }
 
-        protected RoslynComponentInstance GetComponentInstance(IFieldSymbol field, AttributeData webComponentAttr)
+        protected RoslynComponentInstance GetComponentInstance(ISymbol symbol, AttributeData webComponentAttr)
         {
-            var component = new RoslynComponentInstance(TypeName, field, webComponentAttr);
+            var component = new RoslynComponentInstance(TypeName, symbol, webComponentAttr);
             component.Fill();
             return component;
         }

@@ -6,13 +6,13 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
     public class RoslynSessionWeb : ISessionWeb {
         public RoslynSessionWeb(IEnumerable<RoslynService> services, IEnumerable<RoslynComponentType> componentTypes,
             IEnumerable<RoslynPageType> pageTypes) {
-            Services = services.ToList<IService>();
-            ComponentTypes = componentTypes.ToList<IComponentType>();
-            PageTypes = pageTypes.ToList<IPageType>();
+            Services = services.ToDictionary(s => s.Id, s => (IService) s);
+            ComponentTypes = componentTypes.ToDictionary(ct => ct.Id, ct => (IComponentType) ct);
+            PageTypes = pageTypes.ToDictionary(pt => pt.Id, pt => (IPageType) pt);
         }
 
-        public List<IPageType> PageTypes { get; }
-        public List<IService> Services { get; }
-        public List<IComponentType> ComponentTypes { get; }
+        public Dictionary<string, IPageType> PageTypes { get; }
+        public Dictionary<string, IService> Services { get; }
+        public Dictionary<string, IComponentType> ComponentTypes { get; }
     }
 }

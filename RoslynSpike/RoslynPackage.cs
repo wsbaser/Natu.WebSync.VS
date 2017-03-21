@@ -89,9 +89,9 @@ namespace RoslynSpike
         }
 
 
-        private ISessionWebPovider CreateSeleniumContextProvider(VisualStudioWorkspace workspace)
-        {
-            return new RoslynSessionWebProvider(workspace);
+        private ISessionWebPovider CreateSeleniumContextProvider(VisualStudioWorkspace workspace) {
+            var roslynSessionWebProvider = new RoslynSessionWebProvider(workspace);
+            return roslynSessionWebProvider;
         }
 
         private IBrowserConnection CreateBrowserConnection()

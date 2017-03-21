@@ -5,8 +5,8 @@ using RoslynSpike.SessionWeb.Models;
 
 namespace RoslynSpike.SessionWeb
 {
-    public interface ISessionWebPovider
-    {
+    public interface ISessionWebPovider {
         Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(DocumentId changedDocumentId);
+        Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(bool useCache);
     }
 }

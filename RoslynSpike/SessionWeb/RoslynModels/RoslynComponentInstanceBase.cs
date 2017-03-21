@@ -13,12 +13,15 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         public string ParentId { get; }
         public IEnumerable<string> ConstructorParams { get; set; }
 
-        protected IFieldSymbol Field;
+        protected ISymbol symbol;
         protected AttributeData Attr;
 
-        protected RoslynComponentInstanceBase(string parentId, IFieldSymbol field, AttributeData attr) {
+        protected RoslynComponentInstanceBase(string parentId, ISymbol symbol, AttributeData attr) {
             ParentId = parentId;
-            Field = field;
+            if (!(symbol is IFieldSymbol) && !(symbol is IPropertySymbol)) {
+                throw new ArgumentException("Symbol is neither field nor property.");
+            }
+            this.symbol = symbol;
             Attr = attr;
         }
 
@@ -42,11 +45,17 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         }
 
         protected virtual string GetFieldName() {
-            return Field.Name;
+            return symbol.Name;
         }
 
         protected virtual string GetTypeName() {
-            return Field.Type.Name;
+            if (symbol is IFieldSymbol) {
+                return (symbol as IFieldSymbol).Type.GetFullTypeName();
+            }
+            if (symbol is IPropertySymbol) {
+                return (symbol as IPropertySymbol).Type.GetFullTypeName();
+            }
+            throw new ArgumentException("Symbol is neither field nor property.");
         }
 
         protected virtual string GetName() {

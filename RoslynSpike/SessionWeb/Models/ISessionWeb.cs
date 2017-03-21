@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 namespace RoslynSpike.SessionWeb.Models {
     public interface ISessionWeb {
-        List<IPageType> PageTypes { get; }
-        List<IService> Services { get; }
-        List<IComponentType> ComponentTypes { get; }
+        Dictionary<string,IPageType> PageTypes { get; }
+        Dictionary<string,IService> Services { get; }
+        Dictionary<string,IComponentType> ComponentTypes { get; }
     }
 }

@@ -20,17 +20,17 @@ namespace RoslynSpike.Ember {
         }
 
         private void SerializeSessionWeb(EmberDataPayload payload, ISessionWeb web) {
-            payload.services = web.Services.Select(s => new ServiceDto(s)).ToList();
-            payload.pageTypes = web.PageTypes.Select(p => new PageTypeDto(p)).ToList();
-            payload.componentTypes = web.ComponentTypes.Select(c => new ComponentTypeDto(c)).ToList();
+            payload.services = web.Services.Values.Select(s => new ServiceDto(s)).ToList();
+            payload.pageTypes = web.PageTypes.Values.Select(p => new PageTypeDto(p)).ToList();
+            payload.componentTypes = web.ComponentTypes.Values.Select(c => new ComponentTypeDto(c)).ToList();
             SerializeComponents(payload, web);
         }
 
         private void SerializeComponents(EmberDataPayload payload, ISessionWeb web)
         {
             payload.components = new List<ComponentDto>();
-            SerializeComponents(payload, web.PageTypes);
-            SerializeComponents(payload, web.ComponentTypes);
+            SerializeComponents(payload, web.PageTypes.Values);
+            SerializeComponents(payload, web.ComponentTypes.Values);
         }
 
         private static void SerializeComponents(EmberDataPayload payload, IEnumerable<IComponentsContainer> containers)

@@ -39,18 +39,26 @@ namespace RoslynSpike
             throw new NotImplementedException();
         }
 
-        private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e)
-        {
+        private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
             // TODO: how to handle other events
-            if (e.Kind == WorkspaceChangeKind.DocumentChanged)
-            {
-                CollectAndSynchronizeChanges();
+            if (e.Kind == WorkspaceChangeKind.DocumentChanged) {
+                CollectAndSynchronizeChanges(e.DocumentId);
             }
+        }
+
+        private async void CollectAndSynchronizeChanges(DocumentId documentId)
+        {
+            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(documentId);
+            SynchronizeSessionWebs(sessionWebs);
         }
 
         private async void CollectAndSynchronizeChanges()
         {
-            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync();
+            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(false);
+            SynchronizeSessionWebs(sessionWebs);
+        }
+
+        private void SynchronizeSessionWebs(IEnumerable<ISessionWeb> sessionWebs) {
             // . Currently, there is only one
             var firstSessionWeb = sessionWebs.First();
             if (!firstSessionWeb.Equals(_sessionWeb))

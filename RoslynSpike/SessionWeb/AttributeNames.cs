@@ -5,6 +5,10 @@
         public const string BASE_SERVICE_TYPE = "ServiceBase";
         public const string BASE_COMPONENT_TYPE = "ComponentBase";
 
+        public const string BASE_SERVICE_TYPE_FULL_NAME = "selenium.core.Framework.Page.ServiceBase";
+        public const string BASE_PAGE_TYPE_FULL_NAME = "selenium.core.Framework.Page.PageBase";
+        public const string BASE_COMPONENT_TYPE_FULL_NAME = "selenium.core.Framework.Page.ComponentBase";
+
         public const string WEB_ELEMENT_ATTRRIBUTE = "SimpleWebComponentAttribute";
         public const string WEB_COMPONENT_ATTRRIBUTE = "WebComponentAttribute";
         public const string WCA_WEA_NAME_PARAM = "ComponentName";
