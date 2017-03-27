@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="WebSync.Natu.d3f8c789-3e40-4f05-b5bd-be2b91731812" Version="1.0.9" Language="en-US" Publisher="Natu" />
+    <Identity Id="WebSync.Natu.d3f8c789-3e40-4f05-b5bd-be2b91731812" Version="1.0.10" Language="en-US" Publisher="Natu" />
     <DisplayName>Natu WebSync</DisplayName>
     <Description xml:space="preserve">Natu WebSync</Description>
   </Metadata>

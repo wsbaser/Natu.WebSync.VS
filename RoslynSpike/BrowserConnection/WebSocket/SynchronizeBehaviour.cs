@@ -12,7 +12,22 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         public SynchronizeBehaviour(WebSocketBrowserConnection browserConnection)
         {
             _browserConnection = browserConnection;
+            
+        }
+
+        protected override void OnOpen() {
+            base.OnOpen();
             _browserConnection.Broadcasted += _browserConnection_Broadcasted;
+        }
+
+        protected override void OnClose(CloseEventArgs e) {
+            base.OnClose(e);
+            _browserConnection.Broadcasted -= _browserConnection_Broadcasted;
+        }
+
+        protected override void OnError(ErrorEventArgs e) {
+            base.OnError(e);
+            _log.Error(e.Exception, e.Message);
         }
 
         private void _browserConnection_Broadcasted(object sender, SIMessage e)
