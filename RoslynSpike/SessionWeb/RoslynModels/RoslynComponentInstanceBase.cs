@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using RoslynSpike.Scss;
 using RoslynSpike.SessionWeb.Models;
 using RoslynSpike.Utilities.Extensions;
 
@@ -8,7 +9,7 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
     public abstract class RoslynComponentInstanceBase<T> : RoslynModelWithId<T>, IComponentInstance {
         public string FieldName { get; private set; }
         public string Name { get; private set; }
-        public string RootScss { get; private set; }
+        public Scss.Scss RootSelector { get; private set; }
         public string ComponentType { get; private set; }
         public string ParentId { get; }
         public IEnumerable<string> ConstructorParams { get; set; }
@@ -26,7 +27,7 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         }
 
         public override void Fill() {
-            RootScss = GetRootScss();
+            RootSelector = ScssBuilder.Create(GetRootScss());
             Name = GetName();
             ComponentType = GetTypeName();
             FieldName = GetFieldName();
