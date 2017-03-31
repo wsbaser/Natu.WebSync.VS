@@ -27,7 +27,13 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         }
 
         public override void Fill() {
-            RootSelector = ScssBuilder.Create(GetRootScss());
+            try {
+                RootSelector = ScssBuilder.Create(GetRootScss());
+            }
+            catch (InvalidScssException) {
+                RootSelector = null;
+            }
+            
             Name = GetName();
             ComponentType = GetTypeName();
             FieldName = GetFieldName();

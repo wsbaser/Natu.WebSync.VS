@@ -16,14 +16,28 @@ namespace RoslynSpike.Scss {
         private static readonly Regex _nameRegex = new Regex("\\A[_a-zA-Z0-9-]+\\z", RegexOptions.Compiled);
         private static readonly Regex _numberRegex = new Regex("\\A\\d+\\z",RegexOptions.Compiled);
 
+        public const string ROOT_PREFIX = "root:";
+
 //        public static By CreateBy(string scssSelector,params object[] args) {
 //            scssSelector = string.Format(scssSelector, args);
 //            return Create(scssSelector).By;
 //        }
 
         public static Scss Create(string scssSelector) {
-            if (string.IsNullOrEmpty(scssSelector))
+            if (scssSelector==null) {
                 return new Scss(string.Empty, string.Empty);
+            }
+
+            bool combineWithRoot = false;
+            if (scssSelector.StartsWith(ROOT_PREFIX)) {
+                combineWithRoot = true;
+                scssSelector = scssSelector.Remove(0, ROOT_PREFIX.Length).Trim();
+            }
+
+            if (string.IsNullOrEmpty(scssSelector)) {
+                return new Scss(string.Empty, string.Empty);
+            }
+
             string xpath = string.Empty;
             string css = null;
             try {
@@ -46,7 +60,7 @@ namespace RoslynSpike.Scss {
                 else
                     throw e;
             }
-            return new Scss(xpath, css);
+            return new Scss(xpath, css, combineWithRoot);
         }
 
         /// <summary>
@@ -315,7 +329,7 @@ namespace RoslynSpike.Scss {
 //                        ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
 //                    break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidScssException($"Invalid state after reading selector finished '{state}'.");
             }
             isTrueCss = conditions.Count == 0
                         && subelementXpaths.Count == 0 &&
