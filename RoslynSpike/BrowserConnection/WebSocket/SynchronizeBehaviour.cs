@@ -12,7 +12,6 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         public SynchronizeBehaviour(WebSocketBrowserConnection browserConnection)
         {
             _browserConnection = browserConnection;
-            
         }
 
         protected override void OnOpen() {

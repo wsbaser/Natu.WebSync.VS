@@ -114,7 +114,6 @@ namespace RoslynSpike
             }
         }
 
-
         ServiceProvider provider;
 
         ServiceProvider GetServiceProvider() {

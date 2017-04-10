@@ -1,25 +1,19 @@
 ﻿using System.Text;
 using Microsoft.CodeAnalysis;
 
-namespace RoslynSpike.Utilities.Extensions
-{
-    public static class NamespaceExtensions
-    {
-        public static string GetFullMetadataName(this INamespaceOrTypeSymbol symbol)
-        {
+namespace RoslynSpike.Utilities.Extensions {
+    public static class NamespaceExtensions {
+        public static string GetFullMetadataName(this INamespaceOrTypeSymbol symbol) {
             ISymbol s = symbol;
             var sb = new StringBuilder(s.MetadataName);
 
             var last = s;
             s = s.ContainingSymbol;
-            while (!IsRootNamespace(s))
-            {
-                if (s is ITypeSymbol && last is ITypeSymbol)
-                {
+            while (!IsRootNamespace(s) && s.ContainingSymbol != null) {
+                if (s is ITypeSymbol && last is ITypeSymbol) {
                     sb.Insert(0, '+');
                 }
-                else
-                {
+                else {
                     sb.Insert(0, '.');
                 }
                 sb.Insert(0, s.MetadataName);
@@ -29,9 +23,8 @@ namespace RoslynSpike.Utilities.Extensions
             return sb.ToString();
         }
 
-        private static bool IsRootNamespace(ISymbol s)
-        {
-            return s is INamespaceSymbol && ((INamespaceSymbol)s).IsGlobalNamespace;
+        private static bool IsRootNamespace(ISymbol s) {
+            return s is INamespaceSymbol && ((INamespaceSymbol) s).IsGlobalNamespace;
         }
     }
 }

@@ -16,6 +16,7 @@ namespace RoslynSpike.BrowserConnection
         void SendSessionWeb(IEnumerable<ISessionWeb> webs);
         void Connect();
         void Close();
+        bool Connected { get; }
         event EventHandler<IEnumerable<ISessionWeb>> SessionWebReceived;
         event EventHandler SessionWebRequested;
     }

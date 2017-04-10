@@ -26,6 +26,8 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         public ISessionWebSerializer Serializer { get; }
         public event EventHandler<string> SelectorToConvertReceived;
 
+        public bool Connected => Broadcasted != null && Broadcasted.GetInvocationList().Length > 0;
+
         public WebSocketBrowserConnection(int serverPort, string path, ISessionWebSerializer serializer)
         {
             _serverPort = serverPort;

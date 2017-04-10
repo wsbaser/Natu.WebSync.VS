@@ -40,6 +40,9 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
+            if (!_browserConnection.Connected) {
+                return;
+            }
             // TODO: how to handle other events
             if (e.Kind == WorkspaceChangeKind.DocumentChanged) {
                 CollectAndSynchronizeChanges(e.DocumentId);
