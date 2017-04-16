@@ -58,6 +58,8 @@
     <Compile Include="BrowserConnection\SIMessageType.cs" />
     <Compile Include="BrowserConnection\WebSocket\SynchronizeBehaviour.cs" />
     <Compile Include="BrowserConnection\WebSocket\WebSocketBrowserConnection.cs" />
+    <Compile Include="Compiler\ICompiler.cs" />
+    <Compile Include="Compiler\RoslynAssemblyProvider.cs" />
     <Compile Include="Ember\DTO\ComponentsContainerDTO.cs" />
     <Compile Include="Ember\DTO\ComponentTypeDto.cs" />
     <Compile Include="Ember\DTO\ComponentDto.cs" />

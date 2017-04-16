@@ -11,7 +11,6 @@ namespace RoslynSpike.BrowserConnection
     public interface IBrowserConnection
     {
         ISessionWebSerializer Serializer { get; }
-        event EventHandler<string> SelectorToConvertReceived;
         void SendSelector(Selector selector);
         void SendSessionWeb(IEnumerable<ISessionWeb> webs);
         void Connect();
@@ -19,5 +18,7 @@ namespace RoslynSpike.BrowserConnection
         bool Connected { get; }
         event EventHandler<IEnumerable<ISessionWeb>> SessionWebReceived;
         event EventHandler SessionWebRequested;
+        event EventHandler<string> SelectorToConvertReceived;
+        event EventHandler<string> UrlToMatchReceived;
     }
 }

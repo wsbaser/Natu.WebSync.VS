@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using NLog;
 using RoslynSpike.BrowserConnection;
+using RoslynSpike.Compiler;
 using RoslynSpike.SessionWeb;
 using RoslynSpike.SessionWeb.Models;
 
@@ -15,18 +16,26 @@ namespace RoslynSpike
         private readonly Workspace _workspace;
         private readonly IBrowserConnection _browserConnection;
         private readonly ISessionWebPovider _sessionWebProvider;
+        private readonly IAssemblyProvider _assemblyProvider;
 
         private ISessionWeb _sessionWeb;
+        
 
         public SynchronizeIt(Workspace workspace, IBrowserConnection browserConnection,
-            ISessionWebPovider sessionWebProvider)
+            ISessionWebPovider sessionWebProvider, IAssemblyProvider assemblyProvider)
         {
             _workspace = workspace;
             _browserConnection = browserConnection;
             _sessionWebProvider = sessionWebProvider;
+            _assemblyProvider = assemblyProvider;
             _browserConnection.SessionWebRequested += _browserConnection_SessionWebRequested;
             _browserConnection.SessionWebReceived += BrowserConnectionSessionWebReceived;
+            _browserConnection.UrlToMatchReceived += _browserConnection_UrlToMatchReceived;
             _workspace.WorkspaceChanged += _workspace_WorkspaceChanged;
+        }
+
+        private void _browserConnection_UrlToMatchReceived(object sender, string url) {
+            var assembly = _assemblyProvider.GetAssembly();
         }
 
         private void _browserConnection_SessionWebRequested(object sender, EventArgs e)
@@ -40,6 +49,9 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
+            if (e.Kind == WorkspaceChangeKind.SolutionAdded) {
+                var assembly = _assemblyProvider.GetAssembly();
+            }
             if (!_browserConnection.Connected) {
                 return;
             }

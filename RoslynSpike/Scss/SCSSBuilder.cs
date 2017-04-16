@@ -498,9 +498,9 @@ namespace RoslynSpike.Scss {
         private static string XpathTextCondition(string text) {
             if (text.StartsWith("~")) {
                 text = text.CutFirst('~');
-                return $"[contains(normalize-space(text()),{text})]";
+                return $"[text()[contains(normalize-space(.),{text})]]";
             }
-            return $"[normalize-space(text())={text}]";
+            return $"[text()[normalize-space(.)={text}]]";
         }
 
         private static string XpathAttributeCondition(string name, string value, AttributeMatchStyle style = AttributeMatchStyle.Equal) {

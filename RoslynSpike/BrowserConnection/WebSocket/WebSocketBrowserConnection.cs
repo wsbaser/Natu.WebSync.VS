@@ -19,12 +19,14 @@ namespace RoslynSpike.BrowserConnection.WebSocket
         private readonly int _serverPort;
         private readonly string _path;
 
-        public event EventHandler<IEnumerable<ISessionWeb>> SessionWebReceived;
         public event EventHandler SessionWebRequested;
+        public event EventHandler<IEnumerable<ISessionWeb>> SessionWebReceived;
+        public event EventHandler<string> UrlToMatchReceived;
+        public event EventHandler<string> SelectorToConvertReceived;
         public event EventHandler<SIMessage> Broadcasted;
 
         public ISessionWebSerializer Serializer { get; }
-        public event EventHandler<string> SelectorToConvertReceived;
+        
 
         public bool Connected => Broadcasted != null && Broadcasted.GetInvocationList().Length > 0;
 
@@ -68,24 +70,21 @@ namespace RoslynSpike.BrowserConnection.WebSocket
                 case SIMessageType.ConvertSelector:
                     OnSelectorToConvertReceived(message.Data);
                     break;
+                case SIMessageType.MatchUrl:
+                    OnMatchUrlReceived(message.Data);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        private void OnSessionWebRequested()
-        {
-            SessionWebRequested?.Invoke(this, EventArgs.Empty);
-        }
+        private void OnSessionWebRequested() => SessionWebRequested?.Invoke(this, EventArgs.Empty);
 
-        private void OnSessionWebReceived(IEnumerable<ISessionWeb> sessionWebs)
-        {
-            SessionWebReceived?.Invoke(this, sessionWebs);
-        }
+        private void OnMatchUrlReceived(string url) => UrlToMatchReceived?.Invoke(this, url);
 
-        private void OnSelectorToConvertReceived(string selector) {
-            SelectorToConvertReceived?.Invoke(this, selector);
-        }
+        private void OnSelectorToConvertReceived(string selector) => SelectorToConvertReceived?.Invoke(this, selector);
+
+        private void OnSessionWebReceived(IEnumerable<ISessionWeb> sessionWebs) => SessionWebReceived?.Invoke(this, sessionWebs);
 
         public void SendSelector(Selector selector) {
             string serializedData = JsonConvert.SerializeObject(selector);

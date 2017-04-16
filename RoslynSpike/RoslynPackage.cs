@@ -19,6 +19,7 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using RoslynSpike.BrowserConnection;
 using RoslynSpike.BrowserConnection.WebSocket;
+using RoslynSpike.Compiler;
 using RoslynSpike.Converter;
 using RoslynSpike.Ember;
 using RoslynSpike.SessionWeb;
@@ -84,10 +85,12 @@ namespace RoslynSpike
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
             var browserConnection = CreateBrowserConnection();
             var seleniumContextProvider = CreateSeleniumContextProvider(workspace);
-            _synchronizeIt = new SynchronizeIt(workspace, browserConnection, seleniumContextProvider);
+            var assemblyProvier = CreateAssemblyProvider(workspace);
+            _synchronizeIt = new SynchronizeIt(workspace, browserConnection, seleniumContextProvider, assemblyProvier);
             _scssConverter = new SelectorsConverter(browserConnection);
         }
 
+        private IAssemblyProvider CreateAssemblyProvider(VisualStudioWorkspace workspace) => new RoslynAssemblyProvider(workspace);
 
         private ISessionWebPovider CreateSeleniumContextProvider(VisualStudioWorkspace workspace) {
             var roslynSessionWebProvider = new RoslynSessionWebProvider(workspace);
