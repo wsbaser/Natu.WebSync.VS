@@ -17,11 +17,6 @@ namespace RoslynSpike.BrowserConnection
         public SIMessageType Type { get; }
         public string Data { get; }
 
-        public static SIMessage CreateWebSessionData(string data)
-        {
-            return new SIMessage(SIMessageType.SessionWebData, data);
-        }
-
         public string Serialize()
         {
             return JsonConvert.SerializeObject(new {Type = Type.ToString(), Data});
@@ -40,8 +35,10 @@ namespace RoslynSpike.BrowserConnection
             }
         }
 
-        public static SIMessage CreateConvertedSelectorData(string data) {
-            return new SIMessage(SIMessageType.ConvertedSelector, data);
-        }
+        public static SIMessage CreateWebSessionData(string data) => new SIMessage(SIMessageType.SessionWebData, data);
+
+        public static SIMessage CreateConvertedSelectorData(string data) => new SIMessage(SIMessageType.ConvertedSelector, data);
+
+        public static SIMessage CreateUrlMatchResultData(string data) => new SIMessage(SIMessageType.UrlMatchResult, data);
     }
 }

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using NLog;
 using NUnit.Framework;
 using RoslynSpike.Converter;
+using RoslynSpike.Reflection;
 using RoslynSpike.SessionWeb.Models;
 using WebSocketSharp.Server;
 
@@ -86,16 +87,11 @@ namespace RoslynSpike.BrowserConnection.WebSocket
 
         private void OnSessionWebReceived(IEnumerable<ISessionWeb> sessionWebs) => SessionWebReceived?.Invoke(this, sessionWebs);
 
-        public void SendSelector(Selector selector) {
-            string serializedData = JsonConvert.SerializeObject(selector);
-            OnBroadcasted(SIMessage.CreateConvertedSelectorData(serializedData));
-        }
+        public void SendSelector(Selector selector) => OnBroadcasted(SIMessage.CreateConvertedSelectorData(JsonConvert.SerializeObject(selector)));
 
-        public void SendSessionWeb(IEnumerable<ISessionWeb> webs)
-        {
-            var serializedData = Serializer.Serialize(webs);
-            OnBroadcasted(SIMessage.CreateWebSessionData(serializedData));
-        }
+        public void SendSessionWeb(IEnumerable<ISessionWeb> webs) => OnBroadcasted(SIMessage.CreateWebSessionData(Serializer.Serialize(webs)));
+
+        public void SendUrlMatchResult(MatchUrlResult matchUrlResult) => OnBroadcasted(SIMessage.CreateUrlMatchResultData(JsonConvert.SerializeObject(matchUrlResult)));
 
         public void Close()
         {

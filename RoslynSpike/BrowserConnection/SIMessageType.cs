@@ -6,6 +6,7 @@ namespace RoslynSpike.BrowserConnection
         SessionWebRequest,
         ConvertSelector,
         ConvertedSelector,
-        MatchUrl
+        MatchUrl,
+        UrlMatchResult
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using NLog;
 using RoslynSpike.BrowserConnection;
 using RoslynSpike.Compiler;
+using RoslynSpike.Reflection;
 using RoslynSpike.SessionWeb;
 using RoslynSpike.SessionWeb.Models;
 
@@ -35,7 +36,16 @@ namespace RoslynSpike
         }
 
         private void _browserConnection_UrlToMatchReceived(object sender, string url) {
-            var assembly = _assemblyProvider.GetAssembly();
+            MatchUrl(url);
+        }
+
+        private void MatchUrl(string url) {
+            var assemblies = _assemblyProvider.GetAssemblies();
+            if (assemblies != null) {
+                var urlMatcher = new UrlMatcher(assemblies.Item1,assemblies.Item2);
+                var matchUrlResult = urlMatcher.Match(url);
+                _browserConnection.SendUrlMatchResult(matchUrlResult);
+            }
         }
 
         private void _browserConnection_SessionWebRequested(object sender, EventArgs e)
@@ -49,8 +59,8 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
-            if (e.Kind == WorkspaceChangeKind.SolutionAdded) {
-                var assembly = _assemblyProvider.GetAssembly();
+            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
+                MatchUrl("http://10.51.30.202/km");
             }
             if (!_browserConnection.Connected) {
                 return;
