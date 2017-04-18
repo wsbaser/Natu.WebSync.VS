@@ -59,9 +59,9 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
-            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
-                MatchUrl("http://10.51.30.202/km");
-            }
+//            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
+//                MatchUrl("http://10.51.30.202/km");
+//            }
             if (!_browserConnection.Connected) {
                 return;
             }

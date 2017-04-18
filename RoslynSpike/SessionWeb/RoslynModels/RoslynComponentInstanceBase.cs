@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using automateit.SCSS;
 using Microsoft.CodeAnalysis;
 using RoslynSpike.Scss;
 using RoslynSpike.SessionWeb.Models;

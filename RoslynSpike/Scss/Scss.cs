@@ -1,4 +1,5 @@
 using System.Linq;
+using automateit.SCSS;
 using NUnit.Framework;
 
 namespace RoslynSpike.Scss {

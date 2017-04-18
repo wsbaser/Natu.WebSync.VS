@@ -3,28 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using RoslynSpike.Scss;
 using RoslynSpike.Utilities.Extensions;
 
-namespace RoslynSpike.Scss {
-    public class ScssBuilder {
+namespace automateit.SCSS
+{
+    public class ScssBuilder
+    {
+        public const string ROOT_PREFIX = "root:";
+
         private const string DESCENDANT_AXIS = "descendant::";
         private const string CHILD_AXIS = "child::";
         private const string FOLLOWING_SIBLING_AXIS = "following-sibling::";
 
         private const string NTH_CHILD = "nth-child";
+        private const string CONTAINS = "contains";
         private static readonly Regex _identRegex = new Regex("\\A-?[_a-zA-Z][_a-zA-Z0-9-]*\\z", RegexOptions.Compiled);
         private static readonly Regex _nameRegex = new Regex("\\A[_a-zA-Z0-9-]+\\z", RegexOptions.Compiled);
-        private static readonly Regex _numberRegex = new Regex("\\A\\d+\\z",RegexOptions.Compiled);
+        private static readonly Regex _numberRegex = new Regex("\\A\\d+\\z", RegexOptions.Compiled);
+        private static readonly Regex _nthchildArgumentRegex = new Regex("^\\d+(?:n(?:\\+\\d+)?)?$", RegexOptions.Compiled);
+        private static readonly Regex _containsArgumentRegex = new Regex("^'(?:.*)'$", RegexOptions.Compiled);
 
-        public const string ROOT_PREFIX = "root:";
-
-//        public static By CreateBy(string scssSelector,params object[] args) {
+//        public static By CreateBy(string scssSelector, params object[] args)
+//        {
 //            scssSelector = string.Format(scssSelector, args);
 //            return Create(scssSelector).By;
 //        }
 
         public static Scss Create(string scssSelector) {
-            if (scssSelector==null) {
+            if (scssSelector == null) {
                 return new Scss(string.Empty, string.Empty);
             }
 
@@ -35,17 +42,16 @@ namespace RoslynSpike.Scss {
             }
 
             if (string.IsNullOrEmpty(scssSelector)) {
-                return new Scss(string.Empty, string.Empty);
+                return null;
             }
-
-            string xpath = string.Empty;
+            var xpath = string.Empty;
             string css = null;
             try {
-                bool isTrueCss = true;
-                List<string> parts = SplitIgnoringConditions(scssSelector, true, ',');
-                foreach (string partScssSelector in parts) {
+                var isTrueCss = true;
+                var parts = SplitIgnoringConditions(scssSelector, true, ',');
+                foreach (var partScssSelector in parts) {
                     bool partScssIsTrueCss;
-                    string xpathPart = ScssPartToXpath(partScssSelector, out partScssIsTrueCss);
+                    var xpathPart = ScssPartToXpath(partScssSelector, out partScssIsTrueCss);
                     xpath += "//" + RemoveDescendantAxis(xpathPart) + "|";
                     isTrueCss &= partScssIsTrueCss;
                 }
@@ -58,19 +64,19 @@ namespace RoslynSpike.Scss {
                 if (XPathBuilder.IsXPath(scssSelector))
                     xpath = scssSelector;
                 else
-                    throw e;
+                    throw new InvalidScssException($"Invalid scss: {scssSelector}.", e);
             }
             return new Scss(xpath, css, combineWithRoot);
         }
 
         /// <summary>
-        /// Разбить строку на подстроки
+        ///     Разбить строку на подстроки
         /// </summary>
         /// <example>
-        /// "td['Категории, на которые вы уже подписаны'],td.category" => (delimiters=[','], cutDelimiters=true)
+        ///     "td['Категории, на которые вы уже подписаны'],td.category" => (delimiters=[','], cutDelimiters=true)
         ///     "td['Категории, на которые вы уже подписаны']"
         ///     "td.category"
-        /// ">div.toggle-drop>ul>li>span['Вечером']" => (delimiters=['>',' ','+'], cutDelimiters=false)
+        ///     ">div.toggle-drop>ul>li>span['Вечером']" => (delimiters=['>',' ','+'], cutDelimiters=false)
         ///     ">div.toggle-drop"
         ///     ">ul"
         ///     ">li"
@@ -80,48 +86,70 @@ namespace RoslynSpike.Scss {
         /// <param name="cutDelimiters">удалить разделители</param>
         /// <param name="delimiters">список разделителей</param>
         /// <returns>список подстрок</returns>
-        private static List<string> SplitIgnoringConditions(string scssSelector, bool cutDelimiters, params char[] delimiters) {
+        private static List<string> SplitIgnoringConditions(string scssSelector, bool cutDelimiters, params char[] delimiters)
+        {
             var scssParts = new List<string>();
-            string value = string.Empty;
-            bool readCondition = false;
-            int conditionOpenBracketsCount = 0;
-            for (int i = 0; i < scssSelector.Length; i++) {
-                char c = scssSelector[i];
-                if (readCondition) {
+            var value = string.Empty;
+            var readCondition = false;
+            var readFunctionArgument = false;
+            var conditionOpenBracketsCount = 0;
+            for (var i = 0; i < scssSelector.Length; i++)
+            {
+                var c = scssSelector[i];
+                if (readCondition)
+                {
                     if (IsClosingConditionBracket(ref conditionOpenBracketsCount, c))
                         readCondition = false;
+                }
+                else if (readFunctionArgument)
+                {
+                    if (c == ')')
+                    {
+                        readFunctionArgument = false;
+                    }
                 }
                 else if (delimiters.Contains(c))
                 {
                     if (!string.IsNullOrWhiteSpace(value))
                         scssParts.Add(value);
                     value = string.Empty;
-                    if (cutDelimiters) 
-                        continue;   // выбрасывать разделители
+                    if (cutDelimiters)
+                        continue; // выбрасывать разделители
                 }
-                else if (c == '[') readCondition = true;
+                else if (c == '[')
+                {
+                    readCondition = true;
+                }
+                else if (c == '(')
+                {
+                    readFunctionArgument = true;
+                }
                 value += c;
             }
-            if (string.IsNullOrEmpty(value) || readCondition)
+            if (string.IsNullOrEmpty(value)
+                || readCondition
+                || readFunctionArgument)
                 throw new InvalidScssException("SplitIgnoringConditions. unexpected end of line");
             scssParts.Add(value);
             return scssParts;
         }
 
         /// <summary>
-        /// scss = scsspart;scsspart;...scsspart
-        /// Преобразует scsspart в xpath
+        ///     scss = scsspart;scsspart;...scsspart
+        ///     Преобразует scsspart в xpath
         /// </summary>
         /// <param name="scssPart"></param>
         /// <param name="isTrueCss">является ли указанный селектор оригинальным Css</param>
-        private static string ScssPartToXpath(string scssPart, out bool isTrueCss) {
-            List<string> elementScssSelectors = SplitIgnoringConditions(scssPart, false, ' ', '>', '+');
-            string xpath = string.Empty;
+        private static string ScssPartToXpath(string scssPart, out bool isTrueCss)
+        {
+            var elementScssSelectors = SplitIgnoringConditions(scssPart, false, ' ', '>', '+');
+            var xpath = string.Empty;
             isTrueCss = true;
-            for (var i = 0; i < elementScssSelectors.Count; i++) {
-                string elementScssSelector = elementScssSelectors[i];
+            for (var i = 0; i < elementScssSelectors.Count; i++)
+            {
+                var elementScssSelector = elementScssSelectors[i];
                 bool elementScssIsTrueCss;
-                string elementXpath = ElementScssToXpath(elementScssSelector, out elementScssIsTrueCss);
+                var elementXpath = ElementScssToXpath(elementScssSelector, out elementScssIsTrueCss);
                 if (i > 0)
                     elementXpath = "/" + RemoveChildAxis(elementXpath);
                 xpath += elementXpath;
@@ -130,32 +158,37 @@ namespace RoslynSpike.Scss {
             return xpath;
         }
 
-        private static string RemoveDescendantAxis(string elementXpath) {
+        private static string RemoveDescendantAxis(string elementXpath)
+        {
             if (elementXpath.StartsWith(DESCENDANT_AXIS))
                 elementXpath = elementXpath.Remove(0, DESCENDANT_AXIS.Length);
             return elementXpath;
         }
 
-        private static string RemoveChildAxis(string elementXpath) {
+        private static string RemoveChildAxis(string elementXpath)
+        {
             if (elementXpath.StartsWith(CHILD_AXIS))
                 elementXpath = elementXpath.Remove(0, CHILD_AXIS.Length);
             return elementXpath;
         }
 
-        private static string ElementScssToXpath(string elementScss) {
+        private static string ElementScssToXpath(string elementScss)
+        {
             bool dummyBool;
             return ElementScssToXpath(elementScss, out dummyBool);
         }
 
         /// <summary>
-        /// scsspart = elementScss elementScss ... elementScss
-        /// Преобразует elementScss в xpath
+        ///     scsspart = elementScss elementScss ... elementScss
+        ///     Преобразует elementScss в xpath
         /// </summary>
-        private static string ElementScssToXpath(string elementScss, out bool isTrueCss) {
+        private static string ElementScssToXpath(string elementScss, out bool isTrueCss)
+        {
             if (string.IsNullOrWhiteSpace(elementScss))
                 throw new InvalidScssException("Invalid scss: {0}", elementScss);
-            string combinator = string.Empty;
-            switch (elementScss[0]) {
+            var combinator = string.Empty;
+            switch (elementScss[0])
+            {
                 case ' ':
                 case '>':
                 case '+':
@@ -163,28 +196,33 @@ namespace RoslynSpike.Scss {
                     elementScss = elementScss.CutFirst();
                     break;
             }
-            string tag = string.Empty;
-            string id = string.Empty;
-            string className = string.Empty;
-            string condition = string.Empty;
-            string function = string.Empty;
-            string functionArgument = string.Empty;
+            var tag = string.Empty;
+            var id = string.Empty;
+            var className = string.Empty;
+            var condition = string.Empty;
+            var function = string.Empty;
+            var functionArgument = string.Empty;
             var classNames = new List<string>();
             var attributes = new List<ScssAttribute>();
             var conditions = new List<string>();
             var subelementXpaths = new List<string>();
             var state = State.ReadTag;
-            int conditionOpenBracketsCount = 0; // количество открытых скобок [ внутри условия
-            for (int i = 0; i < elementScss.Length; i++) {
-                char c = elementScss[i];
-                if (state == State.ReadCondition && !IsClosingConditionBracket(ref conditionOpenBracketsCount, c)) {
+            var conditionOpenBracketsCount = 0; // количество открытых скобок [ внутри условия
+            for (var i = 0; i < elementScss.Length; i++)
+            {
+                var c = elementScss[i];
+                if (state == State.ReadCondition
+                    && !IsClosingConditionBracket(ref conditionOpenBracketsCount, c))
+                {
                     // внутри условия могут быть символы . # [ на которые нужно не обращать внимания
                     condition += c;
                     continue;
                 }
-                switch (c) {
+                switch (c)
+                {
                     case '.':
-                        switch (state) {
+                        switch (state)
+                        {
                             case State.ReadClass:
                                 if (string.IsNullOrEmpty(className))
                                     ThrowIncorrectSymbol(state, i, elementScss);
@@ -207,7 +245,8 @@ namespace RoslynSpike.Scss {
                     case '#':
                         if (!string.IsNullOrEmpty(id))
                             throw new InvalidScssException("two ids are illegal");
-                        switch (state) {
+                        switch (state)
+                        {
                             case State.ReadClass:
                                 if (string.IsNullOrEmpty(className))
                                     ThrowIncorrectSymbol(state, i, elementScss);
@@ -224,7 +263,8 @@ namespace RoslynSpike.Scss {
                         state = State.ReadId;
                         break;
                     case '[':
-                        switch (state) {
+                        switch (state)
+                        {
                             case State.ReadClass:
                                 if (string.IsNullOrEmpty(className))
                                     ThrowIncorrectSymbol(state, i, elementScss);
@@ -247,17 +287,21 @@ namespace RoslynSpike.Scss {
                     case ']':
                         if (state != State.ReadCondition)
                             ThrowIncorrectSymbol(state, i, elementScss);
-                        if (IsText(condition) || IsNumber(condition) || IsFunction(condition))
+                        if (IsText(condition)
+                            || IsNumber(condition)
+                            || IsFunction(condition))
                             // текстовое условие
                             conditions.Add(condition);
-                        else {
-                            ScssAttribute attribute = ParseAttribute(condition);
+                        else
+                        {
+                            var attribute = ParseAttribute(condition);
                             if (attribute != null)
                                 attributes.Add(attribute);
-                            else {
+                            else
+                            {
                                 // вложенный селектор
                                 bool dummyBool;
-                                string xpathPart = ScssPartToXpath(condition, out dummyBool);
+                                var xpathPart = ScssPartToXpath(condition, out dummyBool);
                                 subelementXpaths.Add(RemoveChildAxis(xpathPart));
                             }
                         }
@@ -265,7 +309,8 @@ namespace RoslynSpike.Scss {
                         state = State.Undefined;
                         break;
                     case ':':
-                        switch (state) {
+                        switch (state)
+                        {
                             case State.ReadFunction:
                             case State.ReadFunctionArgument:
                                 ThrowIncorrectSymbol(state, i, elementScss);
@@ -286,7 +331,8 @@ namespace RoslynSpike.Scss {
                         state = State.Undefined;
                         break;
                     default:
-                        switch (state) {
+                        switch (state)
+                        {
                             case State.ReadId:
                                 id += c;
                                 break;
@@ -314,7 +360,8 @@ namespace RoslynSpike.Scss {
                         break;
                 }
             }
-            switch (state) {
+            switch (state)
+            {
                 case State.Undefined:
                 case State.ReadId:
                 case State.ReadTag:
@@ -324,12 +371,12 @@ namespace RoslynSpike.Scss {
                         ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
                     classNames.Add(className);
                     break;
-//                case State.ReadCondition:
-//                    if (string.IsNullOrEmpty(className))
-//                        ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
-//                    break;
+                //                case State.ReadCondition:
+                //                    if (string.IsNullOrEmpty(className))
+                //                        ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
+                //                    break;
                 default:
-                    throw new InvalidScssException($"Invalid state after reading selector finished '{state}'.");
+                    throw new ArgumentOutOfRangeException();
             }
             isTrueCss = conditions.Count == 0
                         && subelementXpaths.Count == 0 &&
@@ -338,8 +385,10 @@ namespace RoslynSpike.Scss {
             return AggregateToXpath(combinator, tag, id, classNames, attributes, conditions, subelementXpaths, function, functionArgument);
         }
 
-        private static bool IsCssMatchStyle(AttributeMatchStyle matchStyle) {
-            switch (matchStyle) {
+        private static bool IsCssMatchStyle(AttributeMatchStyle matchStyle)
+        {
+            switch (matchStyle)
+            {
                 case AttributeMatchStyle.Equal:
                     return true;
                 default:
@@ -347,19 +396,24 @@ namespace RoslynSpike.Scss {
             }
         }
 
-        private static ScssAttribute ParseAttribute(string condition) {
-            foreach (AttributeMatchStyle matchStyle in Enum.GetValues(typeof (AttributeMatchStyle))) {
-                string[] arr = condition.Split(new[] {matchStyle.StringValue()},
-                                               StringSplitOptions.RemoveEmptyEntries);
-                if (arr.Length == 2 && IsText(arr[1]))
+        private static ScssAttribute ParseAttribute(string condition)
+        {
+            foreach (AttributeMatchStyle matchStyle in Enum.GetValues(typeof(AttributeMatchStyle)))
+            {
+                var arr = condition.Split(new[] { matchStyle.StringValue() },
+                    StringSplitOptions.RemoveEmptyEntries);
+                if (arr.Length == 2
+                    && IsText(arr[1]))
                     return new ScssAttribute(arr[0], arr[1], matchStyle);
             }
             return null;
         }
 
-        private static bool IsFunction(string condition) {
+        private static bool IsFunction(string condition)
+        {
             // TODO: можно заменить на contains function чтобы использовать выражения вида last()-1
-            switch (condition) {
+            switch (condition)
+            {
                 case "last()":
                     return true;
                 default:
@@ -367,74 +421,107 @@ namespace RoslynSpike.Scss {
             }
         }
 
-        private static bool IsNumber(string condition) {
-            return _numberRegex.IsMatch(condition);
-        }
-
-        private static void Validate(string tag, string id, List<string> classNames, List<ScssAttribute> attributes, string function, string functionArgument) {
+        private static void Validate(string tag, string id, List<string> classNames, List<ScssAttribute> attributes, string function, string functionArgument)
+        {
             if (!string.IsNullOrEmpty(tag))
                 ValidateIsElementName(tag);
             if (!string.IsNullOrEmpty(id))
                 ValidateIsName(id);
             foreach (var className in classNames)
                 ValidateIsIdent(className);
-            foreach (ScssAttribute attribute in attributes)
+            foreach (var attribute in attributes)
                 ValidateIsIdent(attribute.Name);
             if (!string.IsNullOrEmpty(function))
-                ValidateIsCSSFunction(function);
-            if (!string.IsNullOrEmpty(functionArgument)) {
-                ValidateIsNumber(functionArgument);
+            {
+                ValidateIsCSSFunction(function, functionArgument);
             }
         }
 
-        private static void ValidateIsNumber(string value) {
-            if(!IsNumber(value))
+        private static void ValidateIsNumber(string value)
+        {
+            if (!IsNumber(value))
                 throw new InvalidScssException("'{0}' is not number", value);
         }
 
-        private static void ValidateIsCSSFunction(string value) {
-            switch (value) {
+        private static void ValidateIsCSSFunction(string value, string functionArgument)
+        {
+            switch (value)
+            {
+                case CONTAINS:
+                    ValidateIsContainsArgument(functionArgument);
+                    break;
                 case NTH_CHILD:
+                    ValidateIsNthChildArgument(functionArgument);
                     return;
                 default:
                     throw new InvalidScssException("'{0}' is not css function", value);
             }
         }
 
-        private static void ValidateIsName(string value) {
+        private static void ValidateIsContainsArgument(string functionArgument)
+        {
+            if (!IsContainsArgument(functionArgument))
+            {
+                throw new InvalidScssException($"'{functionArgument}' is not valid argument for :contains function.");
+            }
+        }
+
+        private static void ValidateIsNthChildArgument(string functionArgument)
+        {
+            if (!IsNthChildArgument(functionArgument))
+            {
+                throw new InvalidScssException($"'{functionArgument}' is not nth-child argument.");
+            }
+        }
+
+        private static void ValidateIsName(string value)
+        {
             if (!IsName(value))
                 throw new InvalidScssException("'{0}' is not name", value);
         }
 
-        private static void ValidateIsIdent(string value) {
+        private static void ValidateIsIdent(string value)
+        {
             if (!IsIdent(value))
                 throw new InvalidScssException("'{0}' is not ident", value);
         }
 
-        private static void ValidateIsElementName(string value) {
+        private static void ValidateIsElementName(string value)
+        {
             if (!IsElementName(value))
                 throw new InvalidScssException("'{0}' is not element name", value);
         }
 
-        private static bool IsIdent(string value) {
+        private static bool IsContainsArgument(string condition) => _containsArgumentRegex.IsMatch(condition);
+
+        private static bool IsNthChildArgument(string condition) => _nthchildArgumentRegex.IsMatch(condition);
+
+        private static bool IsNumber(string condition) => _numberRegex.IsMatch(condition);
+
+        private static bool IsIdent(string value)
+        {
             // ident		-?[_a-z][_a-z0-9-]*
             return _identRegex.IsMatch(value);
         }
 
-        private static bool IsElementName(string value) {
+        private static bool IsElementName(string value)
+        {
             // element_name : IDENT | '*'
             return value == "*" || IsIdent(value);
         }
 
-        private static bool IsName(string value) {
+        private static bool IsName(string value)
+        {
             // name		[_a-z0-9-]+
             return _nameRegex.IsMatch(value);
         }
 
-        private static bool IsClosingConditionBracket(ref int conditionOpenBracketsCount, char c) {
+        private static bool IsClosingConditionBracket(ref int conditionOpenBracketsCount, char c)
+        {
             if (c == '[')
                 conditionOpenBracketsCount++;
-            else if (c == ']') {
+            else if (c == ']')
+            {
                 if (conditionOpenBracketsCount == 0)
                     return true;
                 conditionOpenBracketsCount--;
@@ -443,46 +530,56 @@ namespace RoslynSpike.Scss {
         }
 
         private static string AggregateToXpath(string axis, string tag, string id, List<string> classNames,
-                                               List<ScssAttribute> attributes, List<string> conditions,
-                                               List<string> subelementXpaths, string function, string functionArgument) {
+            List<ScssAttribute> attributes, List<string> conditions,
+            List<string> subelementXpaths, string function, string functionArgument)
+        {
             tag = string.IsNullOrEmpty(tag) ? "*" : tag;
-            string xpath = XpathAxis(axis) + tag;
+            var xpath = XpathAxis(axis) + tag;
             if (!string.IsNullOrEmpty(id))
                 xpath += XpathAttributeCondition("id", string.Format("'{0}'", id));
-            foreach (string className in classNames)
+            foreach (var className in classNames)
                 xpath += XpathAttributeCondition("class", string.Format("'{0}'", className),
-                                                 AttributeMatchStyle.Contains);
-            foreach (ScssAttribute attribute in attributes)
+                    AttributeMatchStyle.Contains);
+            foreach (var attribute in attributes)
                 xpath += XpathAttributeCondition(attribute.Name, attribute.Value, attribute.MatchStyle);
-            foreach (string condition in conditions) {
+            foreach (var condition in conditions)
+            {
                 if (IsText(condition))
                     xpath += XpathTextCondition(condition);
                 else
                     xpath += XpathCondition(condition);
             }
-            foreach (string subelementXpath in subelementXpaths)
+            foreach (var subelementXpath in subelementXpaths)
                 xpath += XpathCondition(subelementXpath);
-            if (!string.IsNullOrEmpty(function)) {
-                xpath += XpathFunction(function,functionArgument);
+            if (!string.IsNullOrEmpty(function))
+            {
+                xpath += XpathFunction(function, functionArgument);
             }
             return xpath;
         }
 
-        private static string XpathFunction(string function, string functionArgument) {
-            switch (function) {
+        private static string XpathFunction(string function, string functionArgument)
+        {
+            switch (function)
+            {
                 case NTH_CHILD:
                     return $"[{functionArgument}]";
+                case CONTAINS:
+                    return $"[text()[contains(normalize-space(.),{functionArgument})]]";
                 default:
                     throw new ArgumentOutOfRangeException("function");
             }
         }
 
-        private static string XpathCondition(string condition) {
+        private static string XpathCondition(string condition)
+        {
             return string.Format("[{0}]", condition);
         }
 
-        private static string XpathAxis(string axis) {
-            switch (axis) {
+        private static string XpathAxis(string axis)
+        {
+            switch (axis)
+            {
                 case "":
                 case " ":
                     return DESCENDANT_AXIS;
@@ -495,16 +592,20 @@ namespace RoslynSpike.Scss {
             }
         }
 
-        private static string XpathTextCondition(string text) {
-            if (text.StartsWith("~")) {
+        private static string XpathTextCondition(string text)
+        {
+            if (text.StartsWith("~"))
+            {
                 text = text.CutFirst('~');
                 return $"[text()[contains(normalize-space(.),{text})]]";
             }
             return $"[text()[normalize-space(.)={text}]]";
         }
 
-        private static string XpathAttributeCondition(string name, string value, AttributeMatchStyle style = AttributeMatchStyle.Equal) {
-            switch (style) {
+        private static string XpathAttributeCondition(string name, string value, AttributeMatchStyle style = AttributeMatchStyle.Equal)
+        {
+            switch (style)
+            {
                 case AttributeMatchStyle.Equal:
                     return string.Format("[@{0}={1}]", name, value);
                 case AttributeMatchStyle.Contains:
@@ -514,21 +615,24 @@ namespace RoslynSpike.Scss {
             }
         }
 
-        private static bool IsText(string stringValue) {
+        private static bool IsText(string stringValue)
+        {
             stringValue = stringValue.CutFirst('~');
             return stringValue.Length > 1 &&
                    ((stringValue.StartsWith("'") && stringValue.EndsWith("'")) ||
                     (stringValue.StartsWith("\"") && stringValue.EndsWith("\"")));
         }
 
-        private static void ThrowIncorrectSymbol(State state, int index, string scss) {
+        private static void ThrowIncorrectSymbol(State state, int index, string scss)
+        {
             throw new InvalidScssException("incorrect symbol for state: state: {0}, index: {1}, scss: {2}",
-                                           state, index, scss);
+                state, index, scss);
         }
 
         #region Nested type: State
 
-        private enum State {
+        private enum State
+        {
             Undefined,
             ReadId,
             ReadTag,
@@ -540,54 +644,57 @@ namespace RoslynSpike.Scss {
 
         #endregion
 
-        public static Scss Concat(string scssSelector1, string scssSelector2) {
-            Scss scss1 = Create(scssSelector1);
-            Scss scss2 = Create(scssSelector2);
+        public static Scss Concat(string scssSelector1, string scssSelector2)
+        {
+            var scss1 = Create(scssSelector1);
+            var scss2 = Create(scssSelector2);
             return scss1.Concat(scss2);
         }
     }
 
     [TestFixture]
-    public class ScssBuilderTests {
-        [TestCase("div[~'text']", "//div[contains(normalize-space(text()),'text')]")]
-        [TestCase("div['text']", "//div[normalize-space(text())='text']")]
-        [TestCase("div[src='1.png']['text']", "//div[@src='1.png'][normalize-space(text())='text']")]
-        [TestCase("div[src=\"1.png\"]['text']", "//div[@src=\"1.png\"][normalize-space(text())='text']")]
-        [TestCase(".classname#myid['text']", "//*[@id='myid'][contains(@class,'classname')][normalize-space(text())='text']")]
-        [TestCase(".classname['mytext']", "//*[contains(@class,'classname')][normalize-space(text())='mytext']")]
-        [TestCase("div.classname['mytext']", "//div[contains(@class,'classname')][normalize-space(text())='mytext']")]
+    public class ScssBuilderTests
+    {
+        [TestCase("div[~'text']", "//div[text()[contains(normalize-space(.),'text')]]")]
+        [TestCase("div['text']", "//div[text()[normalize-space(.)='text']]")]
+        [TestCase("div[src='1.png']['text']", "//div[@src='1.png'][text()[normalize-space(.)='text']]")]
+        [TestCase("div[src=\"1.png\"]['text']", "//div[@src=\"1.png\"][text()[normalize-space(.)='text']]")]
+        [TestCase(".classname#myid['text']", "//*[@id='myid'][contains(@class,'classname')][text()[normalize-space(.)='text']]")]
+        [TestCase(".classname['mytext']", "//*[contains(@class,'classname')][text()[normalize-space(.)='mytext']]")]
+        [TestCase("div.classname['mytext']", "//div[contains(@class,'classname')][text()[normalize-space(.)='mytext']]")]
         [TestCase(".classname1.classname2['mytext']",
-            "//*[contains(@class,'classname1')][contains(@class,'classname2')][normalize-space(text())='mytext']")]
+            "//*[contains(@class,'classname1')][contains(@class,'classname2')][text()[normalize-space(.)='mytext']]")]
         [TestCase("div.classname1.classname2['mytext']",
-            "//div[contains(@class,'classname1')][contains(@class,'classname2')][normalize-space(text())='mytext']")]
+            "//div[contains(@class,'classname1')][contains(@class,'classname2')][text()[normalize-space(.)='mytext']]")]
         [TestCase(".classname1['mytext'] .classname2['mytext']",
-            "//*[contains(@class,'classname1')][normalize-space(text())='mytext']/descendant::*[contains(@class,'classname2')][normalize-space(text())='mytext']"
-            )]
+            "//*[contains(@class,'classname1')][text()[normalize-space(.)='mytext']]/descendant::*[contains(@class,'classname2')][text()[normalize-space(.)='mytext']]"
+        )]
         [TestCase("div.classname1['mytext'] div.classname2['mytext']",
-            "//div[contains(@class,'classname1')][normalize-space(text())='mytext']/descendant::div[contains(@class,'classname2')][normalize-space(text())='mytext']"
-            )]
-        [TestCase("#myid div['mytext']", "//*[@id='myid']/descendant::div[normalize-space(text())='mytext']")]
-        [TestCase("div#myid div['mytext']", "//div[@id='myid']/descendant::div[normalize-space(text())='mytext']")]
+            "//div[contains(@class,'classname1')][text()[normalize-space(.)='mytext']]/descendant::div[contains(@class,'classname2')][text()[normalize-space(.)='mytext']]"
+        )]
+        [TestCase("#myid div['mytext']", "//*[@id='myid']/descendant::div[text()[normalize-space(.)='mytext']]")]
+        [TestCase("div#myid div['mytext']", "//div[@id='myid']/descendant::div[text()[normalize-space(.)='mytext']]")]
         [TestCase("div#myid.classname div['mytext']",
-            "//div[@id='myid'][contains(@class,'classname')]/descendant::div[normalize-space(text())='mytext']")]
-        [TestCase("div#main-basket-info-div>ul>li['Тариф']>a", "//div[@id='main-basket-info-div']/ul/li[normalize-space(text())='Тариф']/a")]
-        [TestCase("li[>h5>strong>a['mytext']]", "//li[h5/strong/a[normalize-space(text())='mytext']]")]
+            "//div[@id='myid'][contains(@class,'classname')]/descendant::div[text()[normalize-space(.)='mytext']]")]
+        [TestCase("div#main-basket-info-div>ul>li['Тариф']>a", "//div[@id='main-basket-info-div']/ul/li[text()[normalize-space(.)='Тариф']]/a")]
+        [TestCase("li[>h5>strong>a['mytext']]", "//li[h5/strong/a[text()[normalize-space(.)='mytext']]]")]
         [TestCase("li[>a]", "//li[a]")]
         [TestCase("li[>a[div]]", "//li[a[descendant::div]]")]
         [TestCase("tr[1]>td[last()]", "//tr[1]/td[last()]")]
         [TestCase("img[src~'111.png']", "//img[contains(@src,'111.png')]")]
-        [TestCase("#showThemesPanel,.genre-filter['text']", "//*[@id='showThemesPanel']|//*[contains(@class,'genre-filter')][normalize-space(text())='text']")]
-        [TestCase(">div.toggle-drop>ul>li>span['Вечером']", "//child::div[contains(@class,'toggle-drop')]/ul/li/span[normalize-space(text())='Вечером']")]
+        [TestCase("#showThemesPanel,.genre-filter['text']", "//*[@id='showThemesPanel']|//*[contains(@class,'genre-filter')][text()[normalize-space(.)='text']]")]
+        [TestCase(">div.toggle-drop>ul>li>span['Вечером']", "//child::div[contains(@class,'toggle-drop')]/ul/li/span[text()[normalize-space(.)='Вечером']]")]
         [TestCase("li[10]>div.news-block", "//li[10]/div[contains(@class,'news-block')]")]
-        [TestCase("td[h3>span['Категории, на которые вы уже подписаны']]>div>div", "//td[descendant::h3/span[normalize-space(text())='Категории, на которые вы уже подписаны']]/div/div")]
+        [TestCase("td[h3>span['Категории, на которые вы уже подписаны']]>div>div", "//td[descendant::h3/span[text()[normalize-space(.)='Категории, на которые вы уже подписаны']]]/div/div")]
         //[TestCase("tr[span.ng-binding[descendant-or-self::*['{0}']]]", "tr[descendant::span[contains(@class,'ng-binding')][descendant-or-self::*[normalize-space(text())='{0}'])]]")]
         [TestCase("button[.km-icon.km-email-attachments]+ul", "//button[descendant::*[contains(@class,'km-icon')][contains(@class,'km-email-attachments')]]/following-sibling::ul")]
         [TestCase("[data-toggle='collapse'][1]", "//*[@data-toggle='collapse'][1]")]
         [TestCase("input[translate(@type, 'B', 'b')='button']", "input[translate(@type, 'B', 'b')='button']")]
-        public void ConvertScssToXpathOnly(string scssSelector, string result) {
+        public void ConvertScssOnlyToXpath(string scssSelector, string result)
+        {
             // .Arrange
             // .Act
-            Scss scss = ScssBuilder.Create(scssSelector);
+            var scss = ScssBuilder.Create(scssSelector);
             // .Assert
             Assert.AreEqual(result, scss.Xpath);
             Assert.IsNull(scss.Css);
@@ -595,10 +702,12 @@ namespace RoslynSpike.Scss {
 
         [TestCase("span[data-bind='text: Title']", "//span[@data-bind='text: Title']")]
         [TestCase("#searchPreferences button[type='submit']", "//*[@id='searchPreferences']/descendant::button[@type='submit']")]
-        public void ConvertScssToXpath(string scssSelector, string result) {
+        [TestCase("label:contains('Law Firm')", "//label[text()[contains(normalize-space(.),'Law Firm')]]")]
+        public void ConvertScssToXpath(string scssSelector, string result)
+        {
             // .Arrange
             // .Act
-            Scss scss = ScssBuilder.Create(scssSelector);
+            var scss = ScssBuilder.Create(scssSelector);
             // .Assert
             Assert.AreEqual(result, scss.Xpath);
             Assert.IsNotNull(scss.Css);
@@ -620,10 +729,21 @@ namespace RoslynSpike.Scss {
         [TestCase(".nav-section >.search-bar ul", ".nav-section >.search-bar ul")]
         [TestCase("#js-documentContentArea>div>p:nth-child(1)", "#js-documentContentArea>div>p:nth-child(1)")]
         [TestCase("#searchQueryInput,#km_id_search_form_search_hint", "#searchQueryInput,#km_id_search_form_search_hint")]
-        public void ConvertScssToCss(string scssSelector, string result) {
-            Scss scss = ScssBuilder.Create(scssSelector);
+        [TestCase("label:contains('Law Firm')", "label:contains('Law Firm')")]
+        [TestCase("span:nth-child(2n+1)", "span:nth-child(2n+1)")]
+        public void ConvertScssToCss(string scssSelector, string result)
+        {
+            var scss = ScssBuilder.Create(scssSelector);
             Assert.AreEqual(result, scss.Css);
             Assert.IsNotNull(scss.Xpath);
+        }
+
+        [TestCase("span:nth-child(2n+1)", "span:nth-child(2n+1)")]
+        public void ConvertScssOnlyToCss(string scssSelector, string result)
+        {
+            var scss = ScssBuilder.Create(scssSelector);
+            Assert.AreEqual(result, scss.Css);
+            //            Assert.IsNull(scss.Xpath);
         }
     }
 }
