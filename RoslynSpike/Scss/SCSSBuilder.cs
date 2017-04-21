@@ -6,6 +6,7 @@ using NUnit.Framework;
 using RoslynSpike.Scss;
 using RoslynSpike.Utilities.Extensions;
 
+
 namespace automateit.SCSS
 {
     public class ScssBuilder
@@ -30,26 +31,28 @@ namespace automateit.SCSS
 //            return Create(scssSelector).By;
 //        }
 
-        public static Scss Create(string scssSelector) {
-            if (scssSelector == null) {
-                return new Scss(string.Empty, string.Empty);
+        public static Scss Create(string scssSelector)
+        {
+            if (string.IsNullOrWhiteSpace(scssSelector))
+            {
+                return null;
             }
 
-            bool combineWithRoot = false;
-            if (scssSelector.StartsWith(ROOT_PREFIX)) {
+            var combineWithRoot = false;
+            if (scssSelector.StartsWith(ROOT_PREFIX))
+            {
                 combineWithRoot = true;
                 scssSelector = scssSelector.Remove(0, ROOT_PREFIX.Length).Trim();
             }
 
-            if (string.IsNullOrEmpty(scssSelector)) {
-                return null;
-            }
             var xpath = string.Empty;
             string css = null;
-            try {
+            try
+            {
                 var isTrueCss = true;
                 var parts = SplitIgnoringConditions(scssSelector, true, ',');
-                foreach (var partScssSelector in parts) {
+                foreach (var partScssSelector in parts)
+                {
                     bool partScssIsTrueCss;
                     var xpathPart = ScssPartToXpath(partScssSelector, out partScssIsTrueCss);
                     xpath += "//" + RemoveDescendantAxis(xpathPart) + "|";
@@ -59,7 +62,8 @@ namespace automateit.SCSS
                 if (isTrueCss)
                     css = scssSelector;
             }
-            catch (InvalidScssException e) {
+            catch (InvalidScssException e)
+            {
                 // Это не scss, возможно это xpath
                 if (XPathBuilder.IsXPath(scssSelector))
                     xpath = scssSelector;
@@ -282,6 +286,7 @@ namespace automateit.SCSS
                                 ThrowIncorrectSymbol(state, i, elementScss);
                                 break;
                         }
+
                         state = State.ReadCondition;
                         break;
                     case ']':
@@ -300,9 +305,16 @@ namespace automateit.SCSS
                             else
                             {
                                 // вложенный селектор
-                                bool dummyBool;
-                                var xpathPart = ScssPartToXpath(condition, out dummyBool);
-                                subelementXpaths.Add(RemoveChildAxis(xpathPart));
+                                try
+                                {
+                                    bool dummyBool;
+                                    var xpathPart = ScssPartToXpath(condition, out dummyBool);
+                                    subelementXpaths.Add(RemoveChildAxis(xpathPart));
+                                }
+                                catch (InvalidScssException)
+                                {
+                                    conditions.Add(condition);
+                                }
                             }
                         }
                         condition = string.Empty;
@@ -355,7 +367,8 @@ namespace automateit.SCSS
                                 ThrowIncorrectSymbol(state, i, elementScss);
                                 break;
                             default:
-                                throw new ArgumentOutOfRangeException();
+                                ThrowIncorrectSymbol(state, i, elementScss);
+                                break;
                         }
                         break;
                 }
@@ -376,7 +389,8 @@ namespace automateit.SCSS
                 //                        ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
                 //                    break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowIncorrectSymbol(state, elementScss.Length, elementScss);
+                    break;
             }
             isTrueCss = conditions.Count == 0
                         && subelementXpaths.Count == 0 &&
@@ -690,6 +704,8 @@ namespace automateit.SCSS
         [TestCase("button[.km-icon.km-email-attachments]+ul", "//button[descendant::*[contains(@class,'km-icon')][contains(@class,'km-email-attachments')]]/following-sibling::ul")]
         [TestCase("[data-toggle='collapse'][1]", "//*[@data-toggle='collapse'][1]")]
         [TestCase("input[translate(@type, 'B', 'b')='button']", "input[translate(@type, 'B', 'b')='button']")]
+        [TestCase("div>span[not(a)]", "//div/span[not(a)]")]
+        [TestCase("div>span[position() mod 2 = 1 and position() > 1]", "//div/span[position() mod 2 = 1 and position() > 1]")]
         public void ConvertScssOnlyToXpath(string scssSelector, string result)
         {
             // .Arrange
