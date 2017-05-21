@@ -9,25 +9,30 @@ using Microsoft.CodeAnalysis.Emit;
 namespace RoslynSpike.Compiler {
     public class RoslynAssemblyProvider : IAssemblyProvider {
         private readonly Workspace _workspace;
+        private Dictionary<string, CompiledProjectAssembly> _compiledAssemblies;
 
         public RoslynAssemblyProvider(Workspace workspace) {
             _workspace = workspace;
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            _compiledAssemblies = new Dictionary<string, CompiledProjectAssembly>();
         }
 
-        public Tuple<Assembly, Assembly> GetAssemblies() {
+        public Tuple<CompiledProjectAssembly, CompiledProjectAssembly> GetAssemblies() {
             var success = true;
             ProjectDependencyGraph projectGraph = _workspace.CurrentSolution.GetProjectDependencyGraph();
-            List<Assembly> assemblies = new List<Assembly>();
+            _compiledAssemblies.Clear();
 
             foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects()) {
-                Compilation projectCompilation = _workspace.CurrentSolution.GetProject(projectId).GetCompilationAsync().Result;
+                var project = _workspace.CurrentSolution.GetProject(projectId);
+                Compilation projectCompilation = project.GetCompilationAsync().Result;
                 if (null != projectCompilation && !string.IsNullOrEmpty(projectCompilation.AssemblyName)) {
                     using (var ms = new MemoryStream()) {
                         EmitResult result = projectCompilation.Emit(ms);
                         if (result.Success) {
                             ms.Seek(0, SeekOrigin.Begin);
                             Assembly assembly = Assembly.Load(ms.ToArray());
-                            assemblies.Add(assembly);
+                            var projectPath = new FileInfo(project.FilePath).Directory.FullName;
+                            _compiledAssemblies.Add(assembly.FullName, new CompiledProjectAssembly(assembly, projectPath));
                         }
                         else {
                             success = false;
@@ -40,15 +45,32 @@ namespace RoslynSpike.Compiler {
             }
             // SPIKE: Get tests assembly if exist
             if (success) {
-                var natuAssembly = assemblies.SingleOrDefault(a => a.FullName.Contains("automateit"));
-                var testsAssembly = assemblies.SingleOrDefault(a => a.FullName.Contains("km.tests.selenium"));
+                var natuAssembly = _compiledAssemblies.Values.SingleOrDefault(a => a.Assembly.FullName.Contains("automateit"));
+                var testsAssembly = _compiledAssemblies.Values.SingleOrDefault(a => a.Assembly.FullName.Contains("km.tests.selenium"));
                 if (natuAssembly == null || testsAssembly == null) {
                     return null;
                 }
-                return new Tuple<Assembly, Assembly>(natuAssembly,testsAssembly);
+                return new Tuple<CompiledProjectAssembly, CompiledProjectAssembly>(natuAssembly,testsAssembly);
             }
             return null;
         }
 
+        private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            if (_compiledAssemblies.ContainsKey(args.Name)) {
+                return _compiledAssemblies[args.Name].Assembly;
+            }
+            return null;
+        }
+    }
+
+    public class CompiledProjectAssembly {
+        public Assembly Assembly;
+        public string ProjectPath;
+
+        public CompiledProjectAssembly(Assembly assembly, string projectPath) {
+            Assembly = assembly;
+            ProjectPath = projectPath;
+        }
     }
 }
