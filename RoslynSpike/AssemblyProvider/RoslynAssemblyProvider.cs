@@ -20,27 +20,28 @@ namespace RoslynSpike.Compiler {
         public Tuple<CompiledProjectAssembly, CompiledProjectAssembly> GetAssemblies() {
             var success = true;
             ProjectDependencyGraph projectGraph = _workspace.CurrentSolution.GetProjectDependencyGraph();
-            _compiledAssemblies.Clear();
-
-            foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects()) {
-                var project = _workspace.CurrentSolution.GetProject(projectId);
-                Compilation projectCompilation = project.GetCompilationAsync().Result;
-                if (null != projectCompilation && !string.IsNullOrEmpty(projectCompilation.AssemblyName)) {
-                    using (var ms = new MemoryStream()) {
-                        EmitResult result = projectCompilation.Emit(ms);
-                        if (result.Success) {
-                            ms.Seek(0, SeekOrigin.Begin);
-                            Assembly assembly = Assembly.Load(ms.ToArray());
-                            var projectPath = new FileInfo(project.FilePath).Directory.FullName;
-                            _compiledAssemblies.Add(assembly.FullName, new CompiledProjectAssembly(assembly, projectPath));
-                        }
-                        else {
-                            success = false;
+            if (_compiledAssemblies.Count == 0) {
+                _compiledAssemblies.Clear();
+                foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects()) {
+                    var project = _workspace.CurrentSolution.GetProject(projectId);
+                    Compilation projectCompilation = project.GetCompilationAsync().Result;
+                    if (null != projectCompilation && !string.IsNullOrEmpty(projectCompilation.AssemblyName)) {
+                        using (var ms = new MemoryStream()) {
+                            EmitResult result = projectCompilation.Emit(ms);
+                            if (result.Success) {
+                                ms.Seek(0, SeekOrigin.Begin);
+                                Assembly assembly = Assembly.Load(ms.ToArray());
+                                var projectPath = new FileInfo(project.FilePath).Directory.FullName;
+                                _compiledAssemblies.Add(assembly.FullName, new CompiledProjectAssembly(assembly, projectPath));
+                            }
+                            else {
+                                success = false;
+                            }
                         }
                     }
-                }
-                else {
-                    success = false;
+                    else {
+                        success = false;
+                    }
                 }
             }
             // SPIKE: Get tests assembly if exist

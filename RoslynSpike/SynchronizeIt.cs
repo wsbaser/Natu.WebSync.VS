@@ -59,9 +59,6 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
-            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
-                MatchUrl("http://10.51.27.92/km/Home/Index.html?source=litigation");
-            }
             if (!_browserConnection.Connected) {
                 return;
             }
