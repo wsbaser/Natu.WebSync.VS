@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using NLog;
@@ -40,11 +41,32 @@ namespace RoslynSpike
         }
 
         private void MatchUrl(string url) {
-            var assemblies = _assemblyProvider.GetAssemblies();
-            if (assemblies != null) {
-                var urlMatcher = new UrlMatcher(assemblies.Item1,assemblies.Item2);
-                var matchUrlResult = urlMatcher.Match(url);
-                _browserConnection.SendUrlMatchResult(matchUrlResult);
+            try {
+                LogInfo($"MatchUrl: {url}");
+                _log.Info($"MatchUrl: {url}");
+                var assemblies = _assemblyProvider.GetAssemblies();
+                if (assemblies != null) {
+                    LogInfo($"Compiled successfully.");
+                    var urlMatcher = new UrlMatcher(assemblies.Item1, assemblies.Item2);
+                    var matchUrlResult = urlMatcher.Match(url);
+                    LogInfo($"Matched successfully: {matchUrlResult.ServiceId}-{matchUrlResult.PageId}");
+                    _browserConnection.SendUrlMatchResult(matchUrlResult);
+                }
+            }
+            catch (Exception e) {
+                LogInfo($"Error!!!");
+                LogInfo(e.Message);
+                LogInfo(e.StackTrace);
+                if (e.InnerException!=null) {
+                    LogInfo(e.InnerException.Message);
+                    LogInfo(e.InnerException.StackTrace);
+                }
+            }
+        }
+
+        private void LogInfo(string s) {
+            using (var streamWriter = File.AppendText("c:\\logs\\natu.log")) {
+                streamWriter.WriteLine(s);
             }
         }
 
@@ -59,6 +81,9 @@ namespace RoslynSpike
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
+            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
+                MatchUrl("http://10.51.27.92/km/admin/UserInterface/General");
+            }
             if (!_browserConnection.Connected) {
                 return;
             }

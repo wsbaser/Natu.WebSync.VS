@@ -26,13 +26,19 @@ namespace RoslynSpike.Compiler {
                     var project = _workspace.CurrentSolution.GetProject(projectId);
                     Compilation projectCompilation = project.GetCompilationAsync().Result;
                     if (null != projectCompilation && !string.IsNullOrEmpty(projectCompilation.AssemblyName)) {
+                        var dependencies = new Dictionary<string, MetadataReference>();
+                        var assemblyNames = projectCompilation.ReferencedAssemblyNames.ToList();
+                        var assembleReferences = projectCompilation.References.ToList();
+                        for (int i = 0; i < assemblyNames.Count; i++) {
+                            dependencies.Add(assemblyNames[i].ToString(), assembleReferences[i]);
+                        }
                         using (var ms = new MemoryStream()) {
                             EmitResult result = projectCompilation.Emit(ms);
                             if (result.Success) {
                                 ms.Seek(0, SeekOrigin.Begin);
                                 Assembly assembly = Assembly.Load(ms.ToArray());
                                 var projectPath = new FileInfo(project.FilePath).Directory.FullName;
-                                _compiledAssemblies.Add(assembly.FullName, new CompiledProjectAssembly(assembly, projectPath));
+                                _compiledAssemblies.Add(assembly.FullName, new CompiledProjectAssembly(assembly, projectPath, dependencies));
                             }
                             else {
                                 success = false;
@@ -61,6 +67,11 @@ namespace RoslynSpike.Compiler {
             if (_compiledAssemblies.ContainsKey(args.Name)) {
                 return _compiledAssemblies[args.Name].Assembly;
             }
+            foreach (var compiledAssembly in _compiledAssemblies.Values) {
+                if (compiledAssembly.Dependencies.ContainsKey(args.Name)) {
+                    return Assembly.LoadFrom(compiledAssembly.Dependencies[args.Name].Display);
+                }
+            }
             return null;
         }
     }
@@ -68,10 +79,12 @@ namespace RoslynSpike.Compiler {
     public class CompiledProjectAssembly {
         public Assembly Assembly;
         public string ProjectPath;
+        public Dictionary<string, MetadataReference> Dependencies;
 
-        public CompiledProjectAssembly(Assembly assembly, string projectPath) {
+        public CompiledProjectAssembly(Assembly assembly, string projectPath, Dictionary<string, MetadataReference> dependencies) {
             Assembly = assembly;
             ProjectPath = projectPath;
+            Dependencies = dependencies;
         }
     }
 }

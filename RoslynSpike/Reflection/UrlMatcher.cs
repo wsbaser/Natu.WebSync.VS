@@ -27,7 +27,7 @@ namespace RoslynSpike.Reflection {
         public MatchUrlResult Match(string url) {
             var seleniumContextTypes = GetSeleniumContexts();
             foreach (var seleniumContextType in seleniumContextTypes) {
-                var seleniumContext = InitSeleniumContext(seleniumContextType,_testsAssembly.ProjectPath);
+                var seleniumContext = InitSeleniumContext(seleniumContextType, _testsAssembly.ProjectPath);
                 return Match(seleniumContextType, seleniumContext, url);
             }
             return null;
@@ -43,7 +43,7 @@ namespace RoslynSpike.Reflection {
             var webType = webProperty.PropertyType;
 
             var matchServiceMethod = webType.GetMethod("MatchService");
-            var matchServiceResult = matchServiceMethod.Invoke(webInstance, new[] { requestData });
+            var matchServiceResult = matchServiceMethod.Invoke(webInstance, new[] {requestData});
 
             if (matchServiceResult != null) {
                 var serviceMatchResultType = _natuAssembly.Assembly.GetType("selenium.core.Framework.Service.ServiceMatchResult");
@@ -69,6 +69,13 @@ namespace RoslynSpike.Reflection {
             return instance;
         }
 
-        private IEnumerable<Type> GetSeleniumContexts() => _testsAssembly.Assembly.GetTypes().AsEnumerable().Where(t => !t.IsAbstract && t.FullName.Contains("SeleniumContext"));
+        private IEnumerable<Type> GetSeleniumContexts() {
+            var list = new List<Type>();
+            var seleniumContextType = _testsAssembly.Assembly.GetType("km.tests.selenium.services.KmSeleniumContext");
+            if (seleniumContextType != null) {
+                list.Add(seleniumContextType);
+            }
+            return list;
+        }
     }
 }
