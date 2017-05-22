@@ -65,9 +65,9 @@ namespace RoslynSpike
         }
 
         private void LogInfo(string s) {
-            using (var streamWriter = File.AppendText("c:\\logs\\natu.log")) {
-                streamWriter.WriteLine(s);
-            }
+//            using (var streamWriter = File.AppendText("c:\\logs\\natu.log")) {
+//                streamWriter.WriteLine(s);
+//            }
         }
 
         private void _browserConnection_SessionWebRequested(object sender, EventArgs e)
