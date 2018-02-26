@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.FindSymbols;
 using NLog;
 using RoslynSpike.SessionWeb.Models;
 using RoslynSpike.SessionWeb.RoslynModels;
-using Project = Microsoft.CodeAnalysis.Project;
 using Solution = Microsoft.CodeAnalysis.Solution;
 using Microsoft.VisualStudio.LanguageServices;
 using RoslynSpike.Utilities.Extensions;
@@ -30,8 +29,32 @@ namespace RoslynSpike.SessionWeb
         public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(bool useCache) {
             if (_cachedSessionWebs == null || !useCache) {
                 try {
-
                     var solution = _workspace.CurrentSolution;
+
+//                    foreach (var project in solution.Projects)
+//                    {
+//                        var typeMetadataName =
+//                            "km.tests.selenium.services.kmNewUI.Pages.Admin.Professionals.ManageUsers.ManageUsersPage";
+//                        var typeByMetadataName =
+//                            project.GetCompilationAsync().Result.GetTypeByMetadataName(typeMetadataName);
+//                        if (typeByMetadataName != null)
+//                        {
+//                            var location = typeByMetadataName.Locations.First();
+//                            var documentFilePath = location.SourceTree.FilePath;
+//                            var documentIdsWithFilePath =
+//                                _workspace.CurrentSolution.GetDocumentIdsWithFilePath(documentFilePath);
+//
+//                            
+//                            if (documentIdsWithFilePath.Length > 0)
+//                            {
+//                                //new OpenDocumentOperation(documentIdsWithFilePath.First()).Apply(_workspace,);
+//                                _workspace.OpenDocument(documentIdsWithFilePath.First());
+//                                break;
+//                            }
+//                        }
+//                    }
+
+
                     var services = await GetServicesAsync(solution);
                     var pages = await GetPagesAsync(solution);
                     var components = await GetComponentsAsync(solution);

@@ -76,6 +76,7 @@ namespace Natu.WebSync.VS
             var componentModel = GetComponentModel();
             if (componentModel == null)
                 return;
+
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
             var browserConnection = CreateBrowserConnection();
             var seleniumContextProvider = CreateSeleniumContextProvider(workspace);
@@ -96,7 +97,7 @@ namespace Natu.WebSync.VS
         {
             try
             {
-#if DEBUG
+#if !DEBUG
                 var connection = new WebSocketBrowserConnection(18000, "/websync", new EmberSerializer());
 #else
                 var connection = new WebSocketBrowserConnection(18488, "/websync", new EmberSerializer());
