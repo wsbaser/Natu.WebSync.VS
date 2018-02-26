@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.ComponentModel.Design;
+using System.Composition;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
@@ -18,6 +23,7 @@ using RoslynSpike.Compiler;
 using RoslynSpike.Converter;
 using RoslynSpike.Ember;
 using RoslynSpike.SessionWeb;
+using Task = System.Threading.Tasks.Task;
 
 namespace Natu.WebSync.VS
 {

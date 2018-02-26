@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.FindSymbols;
 using NLog;
 using RoslynSpike.SessionWeb.Models;
@@ -30,30 +31,6 @@ namespace RoslynSpike.SessionWeb
             if (_cachedSessionWebs == null || !useCache) {
                 try {
                     var solution = _workspace.CurrentSolution;
-
-//                    foreach (var project in solution.Projects)
-//                    {
-//                        var typeMetadataName =
-//                            "km.tests.selenium.services.kmNewUI.Pages.Admin.Professionals.ManageUsers.ManageUsersPage";
-//                        var typeByMetadataName =
-//                            project.GetCompilationAsync().Result.GetTypeByMetadataName(typeMetadataName);
-//                        if (typeByMetadataName != null)
-//                        {
-//                            var location = typeByMetadataName.Locations.First();
-//                            var documentFilePath = location.SourceTree.FilePath;
-//                            var documentIdsWithFilePath =
-//                                _workspace.CurrentSolution.GetDocumentIdsWithFilePath(documentFilePath);
-//
-//                            
-//                            if (documentIdsWithFilePath.Length > 0)
-//                            {
-//                                //new OpenDocumentOperation(documentIdsWithFilePath.First()).Apply(_workspace,);
-//                                _workspace.OpenDocument(documentIdsWithFilePath.First());
-//                                break;
-//                            }
-//                        }
-//                    }
-
 
                     var services = await GetServicesAsync(solution);
                     var pages = await GetPagesAsync(solution);
