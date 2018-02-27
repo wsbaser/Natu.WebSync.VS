@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 using NLog;
 using RoslynSpike.SessionWeb.Models;
@@ -27,7 +28,7 @@ namespace RoslynSpike.SessionWeb
 
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
 
-        public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(bool useCache) {
+        public async Task<IEnumerable<ISessionWeb>> UpdateSessionWebsAsync(bool useCache) {
             if (_cachedSessionWebs == null || !useCache) {
                 try {
                     var solution = _workspace.CurrentSolution;
@@ -50,19 +51,31 @@ namespace RoslynSpike.SessionWeb
             return _cachedSessionWebs;
         }
 
-        public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(DocumentId changedDocumentId) {
-            if (_cachedSessionWebs == null) {
-                return await GetSessionWebsAsync(false);
-            }
-            try {
+        public async Task<bool> UpdateSessionWebsAsync(ISessionWeb sessionWeb, DocumentId changedDocumentId)
+        {
+            try
+            {
                 var document = _workspace.CurrentSolution.GetDocument(changedDocumentId);
-                var syntaxTree = await document.GetSyntaxTreeAsync();
-                var allTypes = syntaxTree.GetRoot().DescendantNodes().OfType<INamedTypeSymbol>();
-                var pages = GetPages(allTypes);
-                var components = GetComppnents(allTypes);
-                return UpdateCachedSessionWebs(pages, components);
+
+                SemanticModel semanticModel = await document.GetSemanticModelAsync().ConfigureAwait(false);
+                var syntaxTree = await document.GetSyntaxTreeAsync().ConfigureAwait(false);
+                var typeDeclarationsInDocument =
+                    syntaxTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+                var typesInDocument = typeDeclarationsInDocument.Select(td => semanticModel.GetDeclaredSymbol(td))
+                    .OfType<INamedTypeSymbol>();
+
+                var pages = GetPages(typesInDocument);
+                var components = GetComppnents(typesInDocument);
+                if (pages.Any() || components.Any())
+                {
+                    UpdateCachedSessionWebs(pages, components);
+                    return true;
+                }
+
+                return false;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 _log.Error(ex, "Unable to collect selenium contexts");
                 throw;
             }
@@ -101,7 +114,7 @@ namespace RoslynSpike.SessionWeb
 
         public IEnumerable<RoslynComponentType> GetComppnents(IEnumerable<INamedTypeSymbol> types) {
             return types
-                .Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == ReflectionNames.BASE_COMPONENT_TYPE_FULL_NAME))
+                .Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == ReflectionNames.BASE_COMPONENT_INTERFACE_FULL_NAME))
                 .Select(dc => {
                     var page = new RoslynComponentType(dc);
                     page.Fill();
@@ -111,7 +124,7 @@ namespace RoslynSpike.SessionWeb
 
         public IEnumerable<RoslynPageType> GetPages(IEnumerable<INamedTypeSymbol> types) {
             return types
-                .Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == ReflectionNames.BASE_PAGE_TYPE_FULL_NAME))
+                .Where(t => t.AllInterfaces.Any(i => i.GetFullTypeName() == ReflectionNames.BASE_PAGE_INTERFACE_FULL_NAME))
                 .Select(dc => {
                     var page = new RoslynPageType(dc);
                     page.Fill();

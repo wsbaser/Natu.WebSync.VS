@@ -75,6 +75,5 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         {
             return GetAttributeOfType(attrs, ReflectionNames.WEB_ELEMENT_ATTRRIBUTE);
         }
-
     }
 }

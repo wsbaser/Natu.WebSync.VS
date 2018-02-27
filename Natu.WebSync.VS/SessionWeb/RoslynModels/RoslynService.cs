@@ -10,5 +10,15 @@ namespace RoslynSpike.SessionWeb.RoslynModels {
         public override void SynchronizeTo(IService model) {
             throw new NotImplementedException();
         }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is RoslynService service2))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

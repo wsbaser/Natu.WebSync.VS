@@ -19,7 +19,7 @@ namespace Natu.WebSync.VS
         private readonly ISessionWebPovider _sessionWebProvider;
         private readonly IAssemblyProvider _assemblyProvider;
 
-        private ISessionWeb _sessionWeb;
+        private IEnumerable<ISessionWeb> _sessionWebs;
         
 
         public SynchronizeIt(Workspace workspace, IBrowserConnection browserConnection,
@@ -109,9 +109,9 @@ namespace Natu.WebSync.VS
         }
 
         private void _workspace_WorkspaceChanged(object sender, WorkspaceChangeEventArgs e) {
-            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
-                MatchUrl("http://10.51.27.92/km/admin/UserInterface/General");
-            }
+//            if (e.Kind == WorkspaceChangeKind.ProjectAdded) {
+//                MatchUrl("http://10.51.27.92/km/admin/UserInterface/General");
+//            }
             if (!_browserConnection.Connected) {
                 return;
             }
@@ -123,24 +123,23 @@ namespace Natu.WebSync.VS
 
         private async void CollectAndSynchronizeChanges(DocumentId documentId)
         {
-            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(documentId);
-            SynchronizeSessionWebs(sessionWebs);
+            if (await _sessionWebProvider.UpdateSessionWebsAsync(_sessionWebs.First(), documentId))
+            {
+                SynchronizeSessionWebs(_sessionWebs);
+            }
         }
 
         private async void CollectAndSynchronizeChanges()
         {
-            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(false);
+            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.UpdateSessionWebsAsync(false);
             SynchronizeSessionWebs(sessionWebs);
         }
 
-        private void SynchronizeSessionWebs(IEnumerable<ISessionWeb> sessionWebs) {
+        private void SynchronizeSessionWebs(IEnumerable<ISessionWeb> sessionWebs)
+        {
             // . Currently, there is only one
-            var firstSessionWeb = sessionWebs.First();
-            if (!firstSessionWeb.Equals(_sessionWeb))
-            {
-                _browserConnection.SendSessionWeb(new[] { firstSessionWeb });
-                _sessionWeb = firstSessionWeb;
-            }
+            _browserConnection.SendSessionWeb(sessionWebs);
+            _sessionWebs = sessionWebs;
         }
     }
 }
