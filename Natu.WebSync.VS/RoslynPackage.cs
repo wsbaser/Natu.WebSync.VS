@@ -103,11 +103,11 @@ namespace Natu.WebSync.VS
         {
             try
             {
-#if !DEBUG
-                var connection = new WebSocketBrowserConnection(18000, "/websync", new EmberSerializer());
-#else
+//#if !DEBUG
+//                var connection = new WebSocketBrowserConnection(18000, "/websync", new EmberSerializer());
+//#else
                 var connection = new WebSocketBrowserConnection(18488, "/websync", new EmberSerializer());
-#endif
+//#endif
 
                 connection.Connect();
                 return connection;

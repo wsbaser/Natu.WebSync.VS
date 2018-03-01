@@ -28,7 +28,7 @@ namespace RoslynSpike.SessionWeb
 
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
 
-        public async Task<IEnumerable<ISessionWeb>> UpdateSessionWebsAsync(bool useCache) {
+        public async Task<IEnumerable<ISessionWeb>> GetSessionWebsAsync(bool useCache) {
             if (_cachedSessionWebs == null || !useCache) {
                 try {
                     var solution = _workspace.CurrentSolution;
@@ -169,7 +169,7 @@ namespace RoslynSpike.SessionWeb
             {
                 return (await SymbolFinder
                     .FindDerivedClassesAsync(baseType, solution, solution.Projects.ToImmutableHashSet())
-                    .ConfigureAwait(false)).Where(dc => !dc.IsAbstract);
+                    .ConfigureAwait(false));//.Where(dc => !dc.IsAbstract);
             }
             return new List<INamedTypeSymbol>();
         }

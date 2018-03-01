@@ -131,12 +131,13 @@ namespace Natu.WebSync.VS
 
         private async void CollectAndSynchronizeChanges()
         {
-            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.UpdateSessionWebsAsync(false);
+            IEnumerable<ISessionWeb> sessionWebs = await _sessionWebProvider.GetSessionWebsAsync(false);
             SynchronizeSessionWebs(sessionWebs);
         }
 
         private void SynchronizeSessionWebs(IEnumerable<ISessionWeb> sessionWebs)
         {
+            //var pageType = sessionWebs.First().PageTypes["km.tests.selenium.services.kmNewUI.Pages.EndUser.Search.SearchPageBase"];
             // . Currently, there is only one
             _browserConnection.SendSessionWeb(sessionWebs);
             _sessionWebs = sessionWebs;
